@@ -1,26 +1,22 @@
 import json
-from pydantic import BaseModel
-import os
+import logging
 from openai import OpenAI, OpenAIError
 
-from settings import *
+import settings
 
 
-def get_client():
-    if not OPENAI_API_KEY:
+logger = logging.getLogger(__name__)
+
+
+def get_client(api_key: str = settings.OPENAI_API_KEY):
+    """Get an OpenAI API Client"""
+    if not api_key:
         raise OpenAIError('The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable')
-    return OpenAI(api_key=OPENAI_API_KEY)
+    return OpenAI(api_key=api_key or settings.OPENAI_API_KEY)
 
-# Pydantic models for documentation
-class Cocktail(BaseModel):
-    normal_name: str
-    fun_name: str
-    ingredients: dict
 
-class CocktailResponse(BaseModel):
-    cocktails: list[Cocktail]
-
-def generate_cocktails(pump_to_drink: dict, requests_for_bartender: str = '', exclude_existing: bool = True) -> dict:
+def generate_cocktails(pump_to_drink: dict, requests_for_bartender: str = '', exclude_existing: bool = True, api_key: str = settings.OPENAI_API_KEY) -> dict:
+    """Generate a JSON list of cocktails"""
     prompt = (
         'You are a creative cocktail mixologist. Based on the following pump configuration, '
         'generate a list of cocktail recipes. For each cocktail, provide a normal cocktail name, '
@@ -54,7 +50,7 @@ def generate_cocktails(pump_to_drink: dict, requests_for_bartender: str = '', ex
         prompt += f'Requests for the bartender: {requests_for_bartender.strip()}\n'
 
     try:
-        client = get_client()
+        client = get_client(api_key=api_key)
         completion = client.chat.completions.create(
             model='gpt-4o-mini',
             messages=[
@@ -73,9 +69,11 @@ def generate_cocktails(pump_to_drink: dict, requests_for_bartender: str = '', ex
         data = json.loads(json_output)
         return data
     except Exception as e:
-        return {'error': str(e)}
+        logger.exception('Error generating cocktails')
+        raise e
 
-def generate_image(prompt: str) -> str:
+def generate_image(prompt: str, api_key: str = settings.OPENAI_API_KEY, use_gpt_transpatency: bool = settings.USE_GPT_TRANSPARENCY) -> str:
+    """Generate an image using OpenAI"""
     try:
         generation_kwargs = {
             'model': 'dall-e-3',
@@ -84,7 +82,7 @@ def generate_image(prompt: str) -> str:
             'quality': 'standard',
             'n': 1,
         }
-        if USE_GPT_TRANSPARENCY:
+        if use_gpt_transpatency:
             generation_kwargs.update({
                 'model': 'gpt-image-1',
                 'background': 'transparent',
@@ -95,7 +93,7 @@ def generate_image(prompt: str) -> str:
             generation_kwargs.update({
                 'response_format': 'b64_json'
             })
-        client = get_client()
+        client = get_client(api_key)
         response = client.images.generate(**generation_kwargs)
         image_url = response.data[0].b64_json
         return image_url

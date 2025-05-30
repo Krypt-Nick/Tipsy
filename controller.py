@@ -7,13 +7,13 @@ import os
 import json
 import concurrent.futures
 
-from settings import *
+from . import settings
 
-if not DEBUG:
+if not settings.DEBUG:
     try:
         import RPi.GPIO as GPIO
     except ModuleNotFoundError:
-        DEBUG = True
+        settings.DEBUG = True
         logger.info('Controller modules not found. Pump control will be disabled')
 
 # Define GPIO pins for each motor here (same as your test).
@@ -36,7 +36,7 @@ MOTORS = [
 
 def setup_gpio():
     """Set up all motor pins for OUTPUT."""
-    if DEBUG:
+    if settings.DEBUG:
         logger.debug('setup_gpio() called — Not actually initializing GPIO pins.')
     else:
         GPIO.setmode(GPIO.BCM)
@@ -47,10 +47,10 @@ def setup_gpio():
 
 def motor_forward(ia, ib):
     """Drive motor forward."""
-    if DEBUG:
+    if settings.DEBUG:
         logger.debug(f'motor_forward(ia={ia}, ib={ib}) called — No actual motor movement.')
     else:
-        if INVERT_PUMP_PINS:
+        if settings.INVERT_PUMP_PINS:
             GPIO.output(ia, GPIO.LOW)
             GPIO.output(ib, GPIO.HIGH)
         else:
@@ -60,7 +60,7 @@ def motor_forward(ia, ib):
 
 def motor_stop(ia, ib):
     """Stop motor."""
-    if DEBUG:
+    if settings.DEBUG:
         logger.debug(f'motor_stop(ia={ia}, ib={ib}) called — No actual motor movement.')
     else:
         GPIO.output(ia, GPIO.LOW)
@@ -68,10 +68,10 @@ def motor_stop(ia, ib):
 
 
 def motor_reverse(ia,ib):
-    if DEBUG:
+    if settings.DEBUG:
         logger.debug(f'motor_reverse(ia={ia}, ib={ib}) called — No actual motor movement.')
     else:
-        if INVERT_PUMP_PINS:
+        if settings.INVERT_PUMP_PINS:
             GPIO.output(ia,GPIO.HIGH)
             GPIO.output(ib,GPIO.LOW)
         else:
@@ -92,20 +92,20 @@ class Pour:
     def run(self):
         self.running = True
         ia, ib = MOTORS[self.pump_index]
-        seconds_to_pour = self.amount * OZ_COEFFICIENT
+        seconds_to_pour = self.amount * settings.OZ_COEFFICIENT
 
-        if RETRACTION_TIME:
-            logger.debug(f'Retraction time is set to {RETRACTION_TIME:.2f} seconds. Adding this time to pour time')
-            seconds_to_pour = seconds_to_pour + RETRACTION_TIME
+        if settings.RETRACTION_TIME:
+            logger.debug(f'Retraction time is set to {settings.RETRACTION_TIME:.2f} seconds. Adding this time to pour time')
+            seconds_to_pour = seconds_to_pour + settings.RETRACTION_TIME
 
         logger.info(f'Pouring {self.amount} oz of Pump {self.pump_index} for {seconds_to_pour:.2f} seconds.')
         motor_forward(ia, ib)
         time.sleep(seconds_to_pour)
 
-        if RETRACTION_TIME:
-            logger.info(f'Retracting Pump {self.pump_index} for {RETRACTION_TIME:.2f} seconds')
+        if settings.RETRACTION_TIME:
+            logger.info(f'Retracting Pump {self.pump_index} for {settings.RETRACTION_TIME:.2f} seconds')
             motor_reverse(ia, ib)
-            time.sleep(RETRACTION_TIME)
+            time.sleep(settings.RETRACTION_TIME)
 
         motor_stop(ia, ib)
         self.running = False
@@ -123,7 +123,7 @@ def prime_pumps(duration=10):
             time.sleep(duration)
             motor_stop(ia, ib)
     finally:
-        if not DEBUG:
+        if not settings.DEBUG:
             GPIO.cleanup()
         else:
             logger.debug('prime_pumps() complete — no GPIO cleanup in debug mode.')
@@ -142,7 +142,7 @@ def clean_pumps(duration=10):
             time.sleep(duration)
             motor_stop(ia, ib)
     finally:
-        if not DEBUG:
+        if not settings.DEBUG:
             GPIO.cleanup()
         else:
             logger.debug('clean_pumps() complete no GPIO cleanup in debug mode.')
@@ -205,7 +205,7 @@ def pour_ingredients(ingredients, single_or_double, pump_config, parent_watcher)
         parent_watcher.pours.append(pour)
         executor_watcher.executors.append(executor.submit(pour.run))
 
-        if index % PUMP_CONCURRENCY == 0:
+        if index % settings.PUMP_CONCURRENCY == 0:
             while not executor_watcher.done():
                 pass
         index += 1
@@ -213,7 +213,7 @@ def pour_ingredients(ingredients, single_or_double, pump_config, parent_watcher)
     while not executor_watcher.done():
         pass
     
-    if not DEBUG:
+    if not settings.DEBUG:
         GPIO.cleanup()
     else:
         logger.debug('pour_ingredients() complete — no GPIO cleanup in debug mode.')
@@ -228,15 +228,15 @@ def make_drink(recipe, single_or_double="single"):
     In debug mode, only prints messages instead of driving motors.
     """
     # 1) Load the pump config dictionary, e.g. {"Pump 1": "vodka", "Pump 2": "gin", ...}
-    if not os.path.exists(CONFIG_FILE):
-        logger.critical(f'pump_config file not found: {CONFIG_FILE}')
+    if not os.path.exists(settings.CONFIG_FILE):
+        logger.critical(f'pump_config file not found: {settings.CONFIG_FILE}')
         return
 
     try:
-        with open(CONFIG_FILE, 'r') as f:
+        with open(settings.CONFIG_FILE, 'r') as f:
             pump_config = json.load(f)
     except Exception as e:
-        logger.critical(f'Error reading {CONFIG_FILE}: {e}')
+        logger.critical(f'Error reading {settings.CONFIG_FILE}: {e}')
         return
 
     # 2) Extract the recipe's ingredients
