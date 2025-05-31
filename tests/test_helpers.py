@@ -3,6 +3,7 @@ import os
 import pygame
 from dotenv import dotenv_values
 import pytest
+from copy import deepcopy
 
 
 class TestHelpers:
@@ -42,11 +43,41 @@ class TestHelpers:
         old_cocktails = self.helpers.load_cocktails()
         try:
             cocktail_1 = {'normal_name': 'Test Cocktail 1'}
-            cocktail_2 = {'normal_name': 'Test Cocktail 2'}
-            self.helpers.save_cocktails({'cocktails': [cocktail_1]}, append=False)
-            assert self.helpers.load_cocktails() == {'cocktails': [cocktail_1]}
-            self.helpers.save_cocktails({'cocktails': [cocktail_2]}, append=True)
-            assert self.helpers.load_cocktails() == {'cocktails': [cocktail_1, cocktail_2]}
+            cocktail_2 = {'normal_name': 'Test Cocktail 2', 'favorite': True}
+            cocktail_3 = {'normal_name': 'Test Cocktail 3', 'favorite': True}
+            self.helpers.save_cocktails({'cocktails': [cocktail_1, cocktail_2]}, append=False)
+            assert self.helpers.load_cocktails() == {'cocktails': [cocktail_2, cocktail_1]}
+            self.helpers.save_cocktails({'cocktails': [cocktail_3]}, append=True)
+            assert self.helpers.load_cocktails() == {'cocktails': [cocktail_2, cocktail_3, cocktail_1]}
+        finally:
+            self.helpers.save_cocktails(old_cocktails, append=False)
+
+    def test_favorite_cocktail(self):
+        """Test marking a cocktail as favorite"""
+        self.get_helpers()
+        old_cocktails = self.helpers.load_cocktails()
+        try:
+            cocktail_list = deepcopy(old_cocktails['cocktails'])
+            new_index = self.helpers.favorite_cocktail(1)
+            favorite_cocktail = cocktail_list[1]
+            favorite_cocktail.update({'favorite': True})
+            assert new_index == 0
+            assert self.helpers.load_cocktails() == {'cocktails': [favorite_cocktail, cocktail_list[0]] + cocktail_list[2:]}
+            assert self.helpers.load_cocktails()['cocktails'][0]['favorite'] == True
+        finally:
+            self.helpers.save_cocktails(old_cocktails, append=False)
+
+    def test_unfavorite_cocktail(self):
+        """Test unmarking a cocktail as favorite"""
+        self.get_helpers()
+        old_cocktails = self.helpers.load_cocktails()
+        try:
+            cocktail_list = deepcopy(old_cocktails['cocktails'])
+            self.helpers.unfavorite_cocktail(0)
+            unfavorite_cocktail = cocktail_list[0]
+            unfavorite_cocktail.update({'favorite': False})
+            assert self.helpers.load_cocktails() == {'cocktails': [unfavorite_cocktail] + cocktail_list[1:]}
+            assert self.helpers.load_cocktails()['cocktails'][0]['favorite'] == False
         finally:
             self.helpers.save_cocktails(old_cocktails, append=False)
 

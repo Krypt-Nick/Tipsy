@@ -2,7 +2,7 @@
 import pygame
 
 from settings import *
-from helpers import get_cocktail_image_path, get_valid_cocktails, wrap_text
+from helpers import get_cocktail_image_path, get_valid_cocktails, wrap_text, favorite_cocktail, unfavorite_cocktail
 from controller import make_drink
 
 import logging
@@ -259,11 +259,29 @@ def run_interface():
         double_logo = pygame.transform.scale(double_logo, (150, 150))
         double_rect = pygame.Rect(screen_width - margin - 150, (screen_height - 150) // 2, 150, 150)
         add_layer(double_logo, double_rect, key='double_logo')
-    except Exception as e:
+    except Exception:
         logger.exception('Error loading double.png')
         double_logo = None
+    if ALLOW_FAVORITES:
+        favorite_rect = pygame.Rect(screen_width - (margin * 3), 150, 150, 150)
+        try:
+            favorite_logo = pygame.image.load('favorite.png')
+            favorite_logo = pygame.transform.scale(favorite_logo, (50, 50))
+        except Exception:
+            logger.exception('Error loading favorite.png')
+            favorite_logo = None
+        try:
+            unfavorite_logo = pygame.image.load('unfavorite.png')
+            unfavorite_logo = pygame.transform.scale(unfavorite_logo, (50, 50))
+        except Exception:
+            logger.exception('Error loading unfavorite.png')
+            unfavorite_logo = None
+    else:
+        favorite_rect = None
+        favorite_logo = None
+        unfavorite_logo = None
     if SHOW_RELOAD_COCKTAILS_BUTTON:
-        reload_cocktails_rect = pygame.Rect(screen_width - 150, 150, 50, 50)
+        reload_cocktails_rect = pygame.Rect(margin * 2, 150, 50, 50)
         try:
             reload_logo = pygame.image.load('reload.png')
             reload_logo = pygame.transform.scale(reload_logo, (50, 50))
@@ -319,6 +337,17 @@ def run_interface():
                     elif reload_cocktails_rect and reload_cocktails_rect.collidepoint(pos):
                         logger.debug('Reloading cocktails due to reload button press')
                         animate_logo_rotate(reload_logo, reload_cocktails_rect, layer_key='reload_logo')
+                        cocktails = get_valid_cocktails()
+                        current_cocktail, current_image, current_cocktail_name, previous_image, next_image = load_cocktail(current_index)
+
+                    elif favorite_rect and favorite_rect.collidepoint(pos):
+                        if current_cocktail.get('favorite'):
+                            logger.debug(f'Unfavoriting current cocktail: {current_index}')
+                            current_index = unfavorite_cocktail(current_index)
+                        else:
+                            logger.debug(f'Favoriting current cocktail: {current_index}')
+                            current_index = favorite_cocktail(current_index)
+                            
                         cocktails = get_valid_cocktails()
                         current_cocktail, current_image, current_cocktail_name, previous_image, next_image = load_cocktail(current_index)
                         
@@ -386,6 +415,7 @@ def run_interface():
 
         if dragging:
             remove_layer('cocktail_name')
+            remove_layer('favorite_logo')
             add_layer(current_image, (drag_offset + cocktail_image_offset, cocktail_image_offset), key='current_cocktail')
             if drag_offset < 0:
                 add_layer(next_image, (screen_width + drag_offset + cocktail_image_offset, cocktail_image_offset), key='next_cocktail')
@@ -400,6 +430,11 @@ def run_interface():
             text_surface = font.render(drink_name, True, (255, 255, 255))
             text_rect = text_surface.get_rect(center=text_position)
             add_layer(text_surface, text_rect, key='cocktail_name')
+            if ALLOW_FAVORITES:
+                if current_cocktail.get('favorite', False) and favorite_logo:
+                    add_layer(favorite_logo, favorite_rect, key='favorite_logo')
+                elif unfavorite_logo:
+                    add_layer(unfavorite_logo, favorite_rect, key='favorite_logo')
         draw_frame()
         clock.tick(60)
     pygame.quit()

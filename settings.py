@@ -55,6 +55,10 @@ settings = {
     'USE_GPT_TRANSPARENCY': {
         'parse_method': json.loads,
         'default': 'false'
+    },
+    'ALLOW_FAVORITES': {
+        'parse_method': json.loads,
+        'default': 'false'
     }
 }
 for name in settings:

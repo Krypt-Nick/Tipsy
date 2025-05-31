@@ -49,6 +49,7 @@ def save_cocktails(data, append=True):
                 cocktails['cocktails'] += data['cocktails']
             else:
                 cocktails = data
+            cocktails['cocktails'] = sorted(cocktails['cocktails'], key=lambda cocktail: not cocktail.get('favorite', False))
             json.dump(cocktails, f, indent=2)
     except Exception as e:
         st.error(f'Error saving cocktails: {e}')
@@ -68,12 +69,31 @@ def get_cocktail_image_path(cocktail):
 
 
 def get_valid_cocktails():
+    """Get the list of cocktails that have images associated with them."""
     cocktail_data = load_cocktails().get('cocktails', [])
     cocktails = []
     for cocktail in cocktail_data:
         if os.path.exists(get_cocktail_image_path(cocktail)):
             cocktails.append(cocktail)
     return cocktails
+
+
+def favorite_cocktail(cocktail_index):
+    """Mark a cocktail as a favorite. Returns the new index of the cocktail"""
+    cocktails = get_valid_cocktails()
+    cocktail = cocktails[cocktail_index]
+    cocktail['favorite'] = True
+    save_cocktails({'cocktails': cocktails}, append=False)
+    return get_valid_cocktails().index(cocktail)
+
+
+def unfavorite_cocktail(cocktail_index):
+    """Unmark a cocktail as a favorite. Returns the new index of the cocktail"""
+    cocktails = get_valid_cocktails()
+    cocktail = cocktails[cocktail_index]
+    cocktail['favorite'] = False
+    save_cocktails({'cocktails': cocktails}, append=False)
+    return get_valid_cocktails().index(cocktail)
 
 
 def save_base64_image(base64_string, output_path):

@@ -20,7 +20,8 @@ class TestSettings:
         'COCKTAILS_FILE': 'test_cocktails.json',
         'LOGO_FOLDER': 'test_drink_logos',
         'INVERT_PUMP_PINS': 'true',
-        'RELOAD_COCKTAILS_TIMEOUT': 3000
+        'RELOAD_COCKTAILS_TIMEOUT': 3000,
+        'ALLOW_FAVORITES': 'true'
     }
 
     def get_settings(self, **config):
@@ -48,6 +49,7 @@ class TestSettings:
         assert self.settings.RETRACTION_TIME == 0
         assert self.settings.USE_GPT_TRANSPARENCY == False
         assert self.settings.COCKTAIL_IMAGE_SCALE == 1.0
+        assert self.settings.ALLOW_FAVORITES == False
 
     def test_loading_settings(self):
         """Test that the env string values are loaded properly into settings"""
@@ -67,6 +69,7 @@ class TestSettings:
         assert self.settings.RETRACTION_TIME == 10
         assert self.settings.USE_GPT_TRANSPARENCY == True
         assert self.settings.COCKTAIL_IMAGE_SCALE == 0.75
+        assert self.settings.ALLOW_FAVORITES == True
 
     def test_invalid_DEBUG(self):
         """Test that setting an invalid value as DEBUG fails silently and sets the value to 8.0"""
