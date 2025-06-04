@@ -8,14 +8,16 @@ import settings
 logger = logging.getLogger(__name__)
 
 
-def get_client(api_key: str = settings.OPENAI_API_KEY):
+def get_client(api_key: str | None = None):
     """Get an OpenAI API Client"""
+    if not api_key:
+        api_key = settings.OPENAI_API_KEY
     if not api_key:
         raise OpenAIError('The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable')
     return OpenAI(api_key=api_key or settings.OPENAI_API_KEY)
 
 
-def generate_cocktails(pump_to_drink: dict, requests_for_bartender: str = '', exclude_existing: bool = True, api_key: str = settings.OPENAI_API_KEY) -> dict:
+def generate_cocktails(pump_to_drink: dict, requests_for_bartender: str = '', exclude_existing: bool = True, api_key: str | None = None) -> dict:
     """Generate a JSON list of cocktails"""
     prompt = (
         'You are a creative cocktail mixologist. Based on the following pump configuration, '
@@ -72,8 +74,10 @@ def generate_cocktails(pump_to_drink: dict, requests_for_bartender: str = '', ex
         logger.exception('Error generating cocktails')
         raise e
 
-def generate_image(prompt: str, api_key: str = settings.OPENAI_API_KEY, use_gpt_transpatency: bool = settings.USE_GPT_TRANSPARENCY) -> str:
+def generate_image(prompt: str, api_key: str | None = None, use_gpt_transparency: bool | None = None) -> str:
     """Generate an image using OpenAI"""
+    if use_gpt_transparency is None:
+        use_gpt_transparency = settings.USE_GPT_TRANSPARENCY
     try:
         generation_kwargs = {
             'model': 'dall-e-3',
@@ -82,7 +86,7 @@ def generate_image(prompt: str, api_key: str = settings.OPENAI_API_KEY, use_gpt_
             'quality': 'standard',
             'n': 1,
         }
-        if use_gpt_transpatency:
+        if use_gpt_transparency:
             generation_kwargs.update({
                 'model': 'gpt-image-1',
                 'background': 'transparent',

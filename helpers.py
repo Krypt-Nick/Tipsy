@@ -166,7 +166,9 @@ def get_image_prompt(cocktail_name, ingredients=None, use_gpt_transparency=False
     return prompt
 
 
-def generate_image(normal_name, regenerate=False, ingredients=None, api_key=None, use_gpt_transparency=settings.USE_GPT_TRANSPARENCY):
+def generate_image(normal_name, regenerate=False, ingredients=None, api_key=None, use_gpt_transparency=None):
+    if use_gpt_transparency is None:
+        use_gpt_transparency = settings.USE_GPT_TRANSPARENCY
     filename = os.path.join(settings.LOGO_FOLDER, get_safe_name(normal_name))
 
     if not regenerate and os.path.exists(filename):
