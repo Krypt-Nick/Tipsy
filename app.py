@@ -159,9 +159,9 @@ with tabs[2]:
             )
 
             # Show the image if it exists
-            image_file = os.path.join(LOGO_FOLDER, f'{safe_name}.png')
-            if os.path.exists(image_file):
-                st.image(image_file, use_container_width=True)
+            image_path = get_cocktail_image_path(selected_cocktail)
+            if os.path.exists(image_path):
+                st.image(image_path, use_container_width=True)
             else:
                 st.write('Image not found.')
 
@@ -236,7 +236,7 @@ with tabs[2]:
             for cocktail in cocktails_list:
                 normal_name = cocktail.get('normal_name', 'unknown_drink')
                 safe_cname = get_safe_name(normal_name)
-                filename = os.path.join(LOGO_FOLDER, f'{safe_cname}.png')
+                filename = get_cocktail_image_path(cocktail)
 
                 st.markdown(f'<h3 style="text-align: center;">{normal_name}</h3>', unsafe_allow_html=True)
                 if os.path.exists(filename):
