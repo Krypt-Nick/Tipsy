@@ -39,7 +39,6 @@ def generate_cocktails(pump_to_drink: dict, requests_for_bartender: str = '', ex
         '}\n\n'
         'Now, use the following pump configuration creatively to generate your cocktail recipes:\n'
         f'{json.dumps(pump_to_drink, indent=2)}\n\n'
-        'Also include each type of liquor available as it\'s own drink, served neat with the normal cocktail name being the name of the liquor\n\n'
     )
     if exclude_existing:
         from helpers import load_cocktails
