@@ -7,3 +7,4 @@ openai
 pydantic
 rembg
 onnxruntime
+qrcode[pil]

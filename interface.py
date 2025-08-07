@@ -1,6 +1,9 @@
 # interface.py
 import pygame
 import json
+import qrcode
+import io
+import socket
 
 from settings import *
 from helpers import get_cocktail_image_path, get_valid_cocktails, wrap_text, favorite_cocktail, unfavorite_cocktail
@@ -160,6 +163,67 @@ class CustomDropdown:
     def get_selected(self):
         """Get the currently selected value"""
         return self.current_value
+
+def get_local_ip():
+    """Get the local IP address"""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        local_ip = s.getsockname()[0]
+        s.close()
+        return local_ip
+    except:
+        return "localhost"
+
+def create_qr_code_slide():
+    """Create a QR code slide for the Streamlit app access"""
+    # Get local IP and port
+    local_ip = get_local_ip()
+    streamlit_port = 8501
+    url = f"http://{local_ip}:{streamlit_port}"
+    
+    # Create QR code
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(url)
+    qr.make(fit=True)
+    
+    # Create QR code image
+    qr_image = qr.make_image(fill_color="black", back_color="white")
+    
+    # Convert PIL image to pygame surface
+    img_buffer = io.BytesIO()
+    qr_image.save(img_buffer, format='PNG')
+    img_buffer.seek(0)
+    
+    # Load into pygame
+    qr_surface = pygame.image.load(img_buffer)
+    
+    # Scale to fit screen (make it large enough to scan easily)
+    qr_size = min(screen_width, screen_height) // 2
+    qr_surface = pygame.transform.scale(qr_surface, (qr_size, qr_size))
+    
+    # Create a cocktail-like object for the QR code slide
+    qr_cocktail = {
+        'normal_name': 'Access App',
+        'fun_name': 'Scan QR Code',
+        'qr_surface': qr_surface,
+        'url': url,
+        'is_qr_slide': True
+    }
+    
+    return qr_cocktail
+
+def get_cocktails_with_qr():
+    """Get valid cocktails and add QR code slide at the end"""
+    cocktails = get_valid_cocktails()
+    qr_cocktail = create_qr_code_slide()
+    cocktails.append(qr_cocktail)
+    return cocktails
 
 pygame.init()
 if FULL_SCREEN:
@@ -999,6 +1063,15 @@ def run_interface():
 
     def load_cocktail_image(cocktail):
         """Given a Cocktail object, load the image for that cocktail and scale it to the screen size"""
+        if cocktail.get('is_qr_slide'):
+            # For QR code slides, use the QR surface directly
+            qr_surface = cocktail.get('qr_surface')
+            if qr_surface:
+                return pygame.transform.scale(qr_surface, (screen_width * COCKTAIL_IMAGE_SCALE, screen_height * COCKTAIL_IMAGE_SCALE))
+            else:
+                return None
+        
+        # Regular cocktail image loading
         path = get_cocktail_image_path(cocktail)
         try:
             img = pygame.image.load(path)
@@ -1006,6 +1079,7 @@ def run_interface():
             return img
         except Exception as e:
             logger.exception(f'Error loading {path}')
+            return None
 
     def load_cocktail(index):
         """Load a cocktail based on a provided index. Also pre-load the images for the previous and next cocktails"""
@@ -1027,7 +1101,8 @@ def run_interface():
         logger.exception('Error loading background image (tipsy.png)')
         add_layer((0, 0), function=screen.fill, key='background')
     
-    cocktails = get_valid_cocktails()
+    cocktails = get_cocktails_with_qr()
+    
     if not cocktails:
         logger.critical('No valid cocktails found in cocktails.json')
         pygame.quit()
@@ -1283,7 +1358,7 @@ def run_interface():
                         elif reload_cocktails_rect and reload_cocktails_rect.collidepoint(pos):
                             logger.debug('Reloading cocktails due to reload button press')
                             animate_logo_rotate(reload_logo, reload_cocktails_rect, layer_key='reload_logo')
-                            cocktails = get_valid_cocktails()
+                            cocktails = get_cocktails_with_qr()
                             current_cocktail, current_image, current_cocktail_name, previous_image, next_image = load_cocktail(current_index)
 
                         elif favorite_rect and favorite_rect.collidepoint(pos):
@@ -1294,7 +1369,7 @@ def run_interface():
                                 logger.debug(f'Favoriting current cocktail: {current_index}')
                                 current_index = favorite_cocktail(current_index)
                                 
-                            cocktails = get_valid_cocktails()
+                            cocktails = get_cocktails_with_qr()
                             current_cocktail, current_image, current_cocktail_name, previous_image, next_image = load_cocktail(current_index)
                             
                         dragging = False
@@ -1341,7 +1416,11 @@ def run_interface():
                             current_offset = start_offset * (1 - progress)
                             add_layer(current_image, (current_offset + cocktail_image_offset, cocktail_image_offset), key='current_cocktail')
                             font = pygame.font.SysFont(None, normal_text_size)
-                            drink_name = current_cocktail_name
+                            if current_cocktail.get('is_qr_slide'):
+                                # For QR code slide, show the URL
+                                drink_name = current_cocktail.get('url', 'Scan QR Code')
+                            else:
+                                drink_name = current_cocktail_name
                             text_surface = font.render(drink_name, True, (255, 255, 255))
                             text_rect = text_surface.get_rect(center=text_position)
                             add_layer(text_surface, text_rect, key='cocktail_name')
@@ -1355,7 +1434,7 @@ def run_interface():
         # Main drawing (when not in special animation)
         if RELOAD_COCKTAILS_TIMEOUT and pygame.time.get_ticks() - reload_time > RELOAD_COCKTAILS_TIMEOUT:
             logger.debug('Reloading cocktails due to auto reload timeout')
-            cocktails = get_valid_cocktails()
+            cocktails = get_cocktails_with_qr()
             current_cocktail, current_image, current_cocktail_name, previous_image, next_image = load_cocktail(current_index)
             reload_time = pygame.time.get_ticks()
 
@@ -1372,7 +1451,11 @@ def run_interface():
             remove_layer('previous_cocktail')
             add_layer(current_image, (cocktail_image_offset, cocktail_image_offset), key='current_cocktail')
             font = pygame.font.SysFont(None, normal_text_size)
-            drink_name = current_cocktail_name
+            if current_cocktail.get('is_qr_slide'):
+                # For QR code slide, show the URL
+                drink_name = current_cocktail.get('url', 'Scan QR Code')
+            else:
+                drink_name = current_cocktail_name
             text_surface = font.render(drink_name, True, (255, 255, 255))
             text_rect = text_surface.get_rect(center=text_position)
             add_layer(text_surface, text_rect, key='cocktail_name')

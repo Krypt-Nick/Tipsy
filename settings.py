@@ -38,11 +38,11 @@ settings = {
     }, 
     'COCKTAIL_IMAGE_SCALE': {
         'parse_method': float,
-        'default': '1.0'
+        'default': '0.7'
     }, 
     'INVERT_PUMP_PINS': {
         'parse_method': json.loads,
-        'default': 'false'
+        'default': 'true'
     }, 
     'FULL_SCREEN': {
         'parse_method': json.loads,
