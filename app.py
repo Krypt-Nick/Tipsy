@@ -92,7 +92,9 @@ with tabs[0]:
         st.markdown(f'<p style="text-align: center;">Pump configuration: {pump_to_drink}</p>', unsafe_allow_html=True)
         
         # Ask AI to generate cocktails from these pumps + bartender requests
-        cocktails_json = assist.generate_cocktails(pump_to_drink, bartender_requests, not clear_cocktails)
+        # Use API key from session state if available, otherwise from environment
+        api_key = st.session_state.get('openai_api_key') or OPENAI_API_KEY
+        cocktails_json = assist.generate_cocktails(pump_to_drink, bartender_requests, not clear_cocktails, api_key=api_key)
         save_cocktails(cocktails_json, not clear_cocktails)
         
         st.markdown('<h2 style="text-align: center;">Generating Cocktail Logos...</h2>', unsafe_allow_html=True)
@@ -102,11 +104,24 @@ with tabs[0]:
 
         for idx, cocktail in enumerate(cocktails):
             normal_name = cocktail.get('normal_name', 'unknown_drink')
-            generate_image(normal_name, False, cocktail['ingredients'])
+            generate_image(normal_name, False, cocktail['ingredients'], api_key=api_key)
             progress_bar.progress((idx + 1) / total)
 
         progress_bar.empty()
         st.success('Image generation complete.')
+        
+        # Signal interface to refresh
+        try:
+            import time
+            refresh_signal = {
+                'action': 'refresh_cocktails',
+                'timestamp': time.time()
+            }
+            with open('interface_signal.json', 'w') as f:
+                json.dump(refresh_signal, f)
+            st.info('Interface refresh signal sent!')
+        except Exception as e:
+            st.warning(f'Could not send refresh signal to interface: {e}')
 
 # ================ TAB 2: Settings ================
 with tabs[1]:
@@ -130,6 +145,23 @@ with tabs[1]:
             st.success('All pumps reversed (cleaned).')
         except Exception as e:
             st.error(f'Error cleaning pumps: {e}')
+
+    # NEW: Refresh Interface
+    st.subheader('Interface Control')
+    if st.button('Refresh Interface'):
+        st.info('Signaling interface to refresh cocktail list...')
+        try:
+            # Create a signal file to tell the interface to refresh
+            import time
+            refresh_signal = {
+                'action': 'refresh_cocktails',
+                'timestamp': time.time()
+            }
+            with open('interface_signal.json', 'w') as f:
+                json.dump(refresh_signal, f)
+            st.success('Interface refresh signal sent!')
+        except Exception as e:
+            st.error(f'Error sending refresh signal: {e}')
 
 # ================ TAB 3: Cocktail Menu ================
 with tabs[2]:
@@ -297,5 +329,19 @@ with tabs[3]:
 
     if st.button('Save') and recipe['normal_name'] and len(recipe['ingredients']) > 0:
         if recipe['normal_name'] not in list(map(lambda x: x['normal_name'], cocktail_data['cocktails'])):
-            generate_image(recipe['normal_name'], False, recipe['ingredients'])
+            api_key = st.session_state.get('openai_api_key') or OPENAI_API_KEY
+            generate_image(recipe['normal_name'], False, recipe['ingredients'], api_key=api_key)
             save_cocktails({'cocktails': [recipe]})
+            
+            # Signal interface to refresh
+            try:
+                import time
+                refresh_signal = {
+                    'action': 'refresh_cocktails',
+                    'timestamp': time.time()
+                }
+                with open('interface_signal.json', 'w') as f:
+                    json.dump(refresh_signal, f)
+                st.success('Cocktail saved and interface refresh signal sent!')
+            except Exception as e:
+                st.warning(f'Cocktail saved but could not send refresh signal: {e}')

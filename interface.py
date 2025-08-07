@@ -4,6 +4,7 @@ import json
 import qrcode
 import io
 import socket
+import os
 
 from settings import *
 from helpers import get_cocktail_image_path, get_valid_cocktails, wrap_text, favorite_cocktail, unfavorite_cocktail
@@ -224,6 +225,24 @@ def get_cocktails_with_qr():
     qr_cocktail = create_qr_code_slide()
     cocktails.append(qr_cocktail)
     return cocktails
+
+def check_for_refresh_signal():
+    """Check if there's a signal from the app to refresh cocktails"""
+    try:
+        if os.path.exists('interface_signal.json'):
+            with open('interface_signal.json', 'r') as f:
+                signal = json.load(f)
+            
+            # Check if it's a refresh signal
+            if signal.get('action') == 'refresh_cocktails':
+                # Remove the signal file after reading
+                os.remove('interface_signal.json')
+                logger.info("Received refresh signal from app")
+                return True
+    except Exception as e:
+        logger.error(f"Error checking refresh signal: {e}")
+    
+    return False
 
 pygame.init()
 if FULL_SCREEN:
@@ -1187,7 +1206,19 @@ def run_interface():
     clock = pygame.time.Clock()
 
     running = True
+    last_refresh_check = pygame.time.get_ticks()
+    refresh_check_interval = 1000  # Check every 1 second
+    
     while running:
+        # Check for refresh signals periodically
+        current_time = pygame.time.get_ticks()
+        if current_time - last_refresh_check > refresh_check_interval:
+            if check_for_refresh_signal():
+                logger.info("Refreshing cocktails due to app signal")
+                cocktails = get_cocktails_with_qr()
+                current_cocktail, current_image, current_cocktail_name, previous_image, next_image = load_cocktail(current_index)
+            last_refresh_check = current_time
+        
         events = pygame.event.get()
         for event in events:
             # Handle dropdown events globally if drink tray is visible
@@ -1225,10 +1256,13 @@ def run_interface():
                         # Start generation in a separate thread
                         import threading
                         def generate_thread():
-                            global drink_ui
+                            global drink_ui, generating_menu
                             new_drinks = generate_new_drink_menu()
                             if new_drinks:
                                 drink_ui = create_drink_management_tray()  # Refresh with new options
+                                logger.info("Drink menu generated successfully")
+                            else:
+                                logger.error("Failed to generate new drink menu")
                             generating_menu = False
                         
                         thread = threading.Thread(target=generate_thread)
