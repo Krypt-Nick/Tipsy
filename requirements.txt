@@ -8,3 +8,4 @@ pydantic
 rembg
 onnxruntime
 qrcode[pil]
+pytest

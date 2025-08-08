@@ -358,22 +358,22 @@ def animate_both_logos_zoom(single_logo, double_logo, single_rect, double_rect, 
 def show_pouring_and_loading(watcher):
     """Overlay pouring_img full screen and a spinning loading_img (720x720) drawn underneath."""
     try:
-        pouring_img = pygame.image.load('pouring.png')
+        pouring_img = pygame.image.load('nav-photos/pouring.png')
         pouring_img = pygame.transform.scale(pouring_img, screen_size)
     except Exception as e:
-        logger.exception('Error loading pouring.png')
+        logger.exception('Error loading nav-photos/pouring.png')
         pouring_img = None
     try:
-        loading_img = pygame.image.load('loading.png')
+        loading_img = pygame.image.load('nav-photos/loading.png')
         loading_img = pygame.transform.scale(loading_img, (70, 70))
     except Exception as e:
-        logger.exception('Error loading loading.png')
+        logger.exception('Error loading nav-photos/loading.png')
         loading_img = None
     try:
-        checkmark_img = pygame.image.load('checkmark.png')
+        checkmark_img = pygame.image.load('nav-photos/checkmark.png')
         checkmark_img = pygame.transform.scale(checkmark_img, (30, 30))
     except Exception as e:
-        logger.exception('Error loading loading.png')
+        logger.exception('Error loading nav-photos/checkmark.png')
         checkmark_img = None
         
     angle = 0
@@ -1111,13 +1111,13 @@ def run_interface():
         next_image = load_cocktail_image(next_cocktail)
         return current_cocktail, current_image, current_cocktail_name, previous_image, next_image
 
-    # Load the static background image (tipsy.png)
+    # Load the static background image (tipsy.jpg)
     try:
         background = pygame.image.load('./tipsy.jpg')
         background = pygame.transform.scale(background, screen_size)
         add_layer(background, (0, 0), key='background')
     except Exception as e:
-        logger.exception('Error loading background image (tipsy.png)')
+        logger.exception('Error loading background image (tipsy.jpg)')
         add_layer((0, 0), function=screen.fill, key='background')
     
     cocktails = get_cocktails_with_qr()
@@ -1133,34 +1133,34 @@ def run_interface():
     margin = 50  # adjust as needed for spacing
     # Load single & double buttons and scale them to 75% of original (base size: 150x150)
     try:
-        single_logo = pygame.image.load('single.png')
+        single_logo = pygame.image.load('nav-photos/single.png')
         single_logo = pygame.transform.scale(single_logo, (150, 150))
         single_rect = pygame.Rect(margin, (screen_height - 150) // 2, 150, 150)
         add_layer(single_logo, single_rect, key='single_logo')
     except Exception as e:
-        logger.exception('Error loading single.png:')
+        logger.exception('Error loading nav-photos/single.png:')
         single_logo = None
     try:
-        double_logo = pygame.image.load('double.png')
+        double_logo = pygame.image.load('nav-photos/double.png')
         double_logo = pygame.transform.scale(double_logo, (150, 150))
         double_rect = pygame.Rect(screen_width - margin - 150, (screen_height - 150) // 2, 150, 150)
         add_layer(double_logo, double_rect, key='double_logo')
-    except Exception:
-        logger.exception('Error loading double.png')
+    except Exception as e:
+        logger.exception('Error loading nav-photos/double.png')
         double_logo = None
     if ALLOW_FAVORITES:
         favorite_rect = pygame.Rect(screen_width - (margin * 3), 150, 150, 150)
         try:
-            favorite_logo = pygame.image.load('favorite.png')
+            favorite_logo = pygame.image.load('nav-photos/favorite.png')
             favorite_logo = pygame.transform.scale(favorite_logo, (50, 50))
         except Exception:
-            logger.exception('Error loading favorite.png')
+            logger.exception('Error loading nav-photos/favorite.png')
             favorite_logo = None
         try:
-            unfavorite_logo = pygame.image.load('unfavorite.png')
+            unfavorite_logo = pygame.image.load('nav-photos/unfavorite.png')
             unfavorite_logo = pygame.transform.scale(unfavorite_logo, (50, 50))
         except Exception:
-            logger.exception('Error loading unfavorite.png')
+            logger.exception('Error loading nav-photos/unfavorite.png')
             unfavorite_logo = None
     else:
         favorite_rect = None
@@ -1169,11 +1169,11 @@ def run_interface():
     if SHOW_RELOAD_COCKTAILS_BUTTON:
         reload_cocktails_rect = pygame.Rect(margin * 2, 150, 50, 50)
         try:
-            reload_logo = pygame.image.load('reload.png')
+            reload_logo = pygame.image.load('nav-photos/reload.png')
             reload_logo = pygame.transform.scale(reload_logo, (50, 50))
             add_layer(reload_logo, reload_cocktails_rect, key='reload_logo')
         except Exception as e:
-            logger.exception('Error loading loading.png')
+            logger.exception('Error loading nav-photos/reload.png')
             reload_logo = None
     else:
         reload_cocktails_rect = None

@@ -6,7 +6,7 @@ This project is a multi-part cocktail maker system designed to run on a Raspberr
    Allows users to configure pump settings, generate cocktail recipes (using an OpenAI API), and view a recipe book with cocktail images and details.
 
 2. **Pygame Interface (interface.py):**  
-   Provides a full-screen, swipeable interface for cocktail selection. The interface displays a background image (`tipsy.png`), overlays the selected cocktail logo, and includes extra interactive logos (`single.png` and `double.png`) to select drink mode (single or double). It features various animations such as text zoom and logo pop effects, and displays pouring/loading overlays.
+   Provides a full-screen, swipeable interface for cocktail selection. The interface displays a background image (`tipsy.jpg`), overlays the selected cocktail logo, and includes extra interactive logos (`nav-photos/single.png` and `nav-photos/double.png`) to select drink mode (single or double). It features various animations such as text zoom and logo pop effects, and displays pouring/loading overlays.
 
 3. **Pump Controller (controller.py):**  
    Reads the selected cocktail and pump configuration (from `cocktails.json` and `pump_config.json`), then controls 12 pumps via the Raspberry Pi GPIO (using L91105 motor drivers) to mix the drink. The controller uses a mapping of ingredients to pump pins.
@@ -22,7 +22,7 @@ This project is a multi-part cocktail maker system designed to run on a Raspberr
   Generates cocktail recipes (via OpenAI API) based on pump configuration and bartender requests.
 
 - **Swipe & Mode Selection Interface:**  
-  Use touch/mouse swipe gestures to navigate cocktail logos. Tap the extra logos (`single.png` and `double.png`) to select drink mode, triggering animations and overlays.
+  Use touch/mouse swipe gestures to navigate cocktail logos. Tap the extra logos (`nav-photos/single.png` and `nav-photos/double.png`) to select drink mode, triggering animations and overlays.
 
 - **Pump Control:**  
   Uses Raspberry Pi GPIO and L91105 motor drivers to run pumps based on the selected cocktail’s ingredients.
@@ -118,9 +118,9 @@ You can send these files directly to a PCB manufacturer (such as JLCPCB) to have
    - Generate cocktail recipes via the Streamlit interface (app.py) to create/update `cocktails.json`.
 
 6. **Place Image Assets:**  
-   - Ensure `tipsy.png` is in the project root.  
+   - Ensure `tipsy.jpg` is in the project root.  
    - Place your cocktail logo images in the `drink_logos` folder.  
-   - Ensure `single.png`, `double.png`, `pouring.png`, and `loading.png` are in the project root (or adjust paths accordingly).
+   - Ensure `nav-photos/single.png`, `nav-photos/double.png`, `nav-photos/pouring.png`, and `nav-photos/loading.png` are in the nav-photos folder (or adjust paths accordingly).
 
 7. **PCB Board Production Files:** 
    Check the `/PCB Board Production` folder for Gerber files, BOM, and component placement files required for PCB manufacturing. Send these files to your chosen PCB manufacturer (e.g., JLCPCB).
@@ -187,7 +187,7 @@ Several settings can be configured via environment variables, or in a .env file.
   Ensure that your wiring matches the pin mappings in `controller.py` and that your Raspberry Pi user has permissions to access GPIO.
 
 - **Image Loading Errors:**  
-  Verify that all image files (`tipsy.png`, `pouring.png`, `loading.png`, logos, etc.) are present and paths are correct.
+  Verify that all image files (`tipsy.jpg`, `nav-photos/pouring.png`, `nav-photos/loading.png`, logos, etc.) are present and paths are correct.
 
 - **API Key Issues:**  
   If the API key prompt appears on every run, ensure the `.env` file is being written to and that you have appropriate write permissions.
