@@ -19,6 +19,20 @@
             "justMyCode": true
         },
         {
+            "name": "Run Pygame Interface (700x700 Debug)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/interface.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "FULL_SCREEN": "false",
+                "WINDOW_WIDTH": "700",
+                "WINDOW_HEIGHT": "700",
+                "DEBUG": "true"
+            }
+        },
+        {
             "name": "Run Pump Controller",
             "type": "python",
             "request": "launch",

@@ -7,7 +7,7 @@ import socket
 import os
 
 from settings import *
-from helpers import get_cocktail_image_path, get_valid_cocktails, wrap_text, favorite_cocktail, unfavorite_cocktail
+from helpers import get_cocktail_image_path, get_valid_cocktails, wrap_text, favorite_cocktail, unfavorite_cocktail, get_centered_rect_for_surface
 from controller import make_drink
 
 import logging
@@ -248,7 +248,7 @@ pygame.init()
 if FULL_SCREEN:
     screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 else:
-    screen = pygame.display.set_mode((720, 720))
+    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 screen_size = screen.get_size()
 screen_width, screen_height = screen_size
 cocktail_image_offset = screen_width * (1.0 - COCKTAIL_IMAGE_SCALE) // 2
@@ -1086,7 +1086,10 @@ def run_interface():
             # For QR code slides, use the QR surface directly
             qr_surface = cocktail.get('qr_surface')
             if qr_surface:
-                return pygame.transform.scale(qr_surface, (screen_width * COCKTAIL_IMAGE_SCALE, screen_height * COCKTAIL_IMAGE_SCALE))
+                qr_scale = 0.25  # Scale down QR by 25%
+                scaled = pygame.transform.scale(qr_surface, (int(screen_width * COCKTAIL_IMAGE_SCALE * qr_scale), int(screen_height * COCKTAIL_IMAGE_SCALE * qr_scale)))
+                # Centered rect will be applied where added
+                return scaled
             else:
                 return None
         
@@ -1094,7 +1097,11 @@ def run_interface():
         path = get_cocktail_image_path(cocktail)
         try:
             img = pygame.image.load(path)
-            img = pygame.transform.scale(img, (screen_width * COCKTAIL_IMAGE_SCALE, screen_height * COCKTAIL_IMAGE_SCALE))
+            common_scale = 0.5  # Scale all cocktails by 50% to match QR sizing
+            img = pygame.transform.scale(
+                img,
+                (int(screen_width * COCKTAIL_IMAGE_SCALE * common_scale), int(screen_height * COCKTAIL_IMAGE_SCALE * common_scale))
+            )
             return img
         except Exception as e:
             logger.exception(f'Error loading {path}')
@@ -1233,7 +1240,7 @@ def run_interface():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_q:
+                if event.key == pygame.K_q or event.key == pygame.K_ESCAPE:
                     running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 # Check if drink management tab is clicked or dragged
@@ -1424,11 +1431,23 @@ def run_interface():
                             elapsed = pygame.time.get_ticks() - start_time
                             progress = min(elapsed / duration, 1.0)
                             current_offset = start_offset + (target_offset - start_offset) * progress
-                            add_layer(current_image, (current_offset + cocktail_image_offset, cocktail_image_offset), key='current_cocktail')
+                            add_layer(
+                                current_image,
+                                get_centered_rect_for_surface(current_image, screen_width, screen_height, offset_x=current_offset).topleft,
+                                key='current_cocktail'
+                            )
                             if drag_offset < 0:
-                                add_layer(next_image, (screen_width + current_offset + cocktail_image_offset, cocktail_image_offset), key='next_cocktail')
+                                add_layer(
+                                    next_image,
+                                    get_centered_rect_for_surface(next_image, screen_width, screen_height, offset_x=screen_width + current_offset).topleft,
+                                    key='next_cocktail'
+                                )
                             else:
-                                add_layer(previous_image, (-screen_width + current_offset + cocktail_image_offset, cocktail_image_offset), key='previous_cocktail')
+                                add_layer(
+                                    previous_image,
+                                    get_centered_rect_for_surface(previous_image, screen_width, screen_height, offset_x=-screen_width + current_offset).topleft,
+                                    key='previous_cocktail'
+                                )
                             draw_frame()
                             if progress >= 1.0:
                                 break
@@ -1448,15 +1467,19 @@ def run_interface():
                             elapsed = pygame.time.get_ticks() - start_time
                             progress = min(elapsed / duration, 1.0)
                             current_offset = start_offset * (1 - progress)
-                            add_layer(current_image, (current_offset + cocktail_image_offset, cocktail_image_offset), key='current_cocktail')
-                            font = pygame.font.SysFont(None, normal_text_size)
-                            if current_cocktail.get('is_qr_slide'):
-                                # For QR code slide, show the URL
-                                drink_name = current_cocktail.get('url', 'Scan QR Code')
-                            else:
-                                drink_name = current_cocktail_name
+                            add_layer(
+                                current_image,
+                                get_centered_rect_for_surface(current_image, screen_width, screen_height, offset_x=current_offset).topleft,
+                                key='current_cocktail'
+                            )
+                            # Text just below the current image with padding
+                            is_qr = current_cocktail.get('is_qr_slide')
+                            label_font_size = 32 if is_qr else 60
+                            font = pygame.font.SysFont(None, label_font_size)
+                            drink_name = current_cocktail.get('url', 'Scan QR Code') if is_qr else current_cocktail_name
                             text_surface = font.render(drink_name, True, (255, 255, 255))
-                            text_rect = text_surface.get_rect(center=text_position)
+                            image_rect = get_centered_rect_for_surface(current_image, screen_width, screen_height, offset_x=current_offset)
+                            text_rect = text_surface.get_rect(midtop=(screen_width // 2, image_rect.bottom + 24))
                             add_layer(text_surface, text_rect, key='cocktail_name')
                             draw_frame()
                             if progress >= 1.0:
@@ -1475,23 +1498,39 @@ def run_interface():
         if dragging:
             remove_layer('cocktail_name')
             remove_layer('favorite_logo')
-            add_layer(current_image, (drag_offset + cocktail_image_offset, cocktail_image_offset), key='current_cocktail')
+            add_layer(
+                current_image,
+                get_centered_rect_for_surface(current_image, screen_width, screen_height, offset_x=drag_offset).topleft,
+                key='current_cocktail'
+            )
             if drag_offset < 0:
-                add_layer(next_image, (screen_width + drag_offset + cocktail_image_offset, cocktail_image_offset), key='next_cocktail')
+                add_layer(
+                    next_image,
+                    get_centered_rect_for_surface(next_image, screen_width, screen_height, offset_x=screen_width + drag_offset).topleft,
+                    key='next_cocktail'
+                )
             elif drag_offset > 0:
-                add_layer(previous_image, (-screen_width + drag_offset + cocktail_image_offset, cocktail_image_offset), key='previous_cocktail')
+                add_layer(
+                    previous_image,
+                    get_centered_rect_for_surface(previous_image, screen_width, screen_height, offset_x=-screen_width + drag_offset).topleft,
+                    key='previous_cocktail'
+                )
         else:
             remove_layer('next_cocktail')
             remove_layer('previous_cocktail')
-            add_layer(current_image, (cocktail_image_offset, cocktail_image_offset), key='current_cocktail')
-            font = pygame.font.SysFont(None, normal_text_size)
-            if current_cocktail.get('is_qr_slide'):
-                # For QR code slide, show the URL
-                drink_name = current_cocktail.get('url', 'Scan QR Code')
-            else:
-                drink_name = current_cocktail_name
+            add_layer(
+                current_image,
+                get_centered_rect_for_surface(current_image, screen_width, screen_height, offset_x=0).topleft,
+                key='current_cocktail'
+            )
+            # Text just below the current image with padding
+            is_qr = current_cocktail.get('is_qr_slide')
+            label_font_size = 32 if is_qr else 60
+            font = pygame.font.SysFont(None, label_font_size)
+            drink_name = current_cocktail.get('url', 'Scan QR Code') if is_qr else current_cocktail_name
             text_surface = font.render(drink_name, True, (255, 255, 255))
-            text_rect = text_surface.get_rect(center=text_position)
+            image_rect = get_centered_rect_for_surface(current_image, screen_width, screen_height, offset_x=0)
+            text_rect = text_surface.get_rect(midtop=(screen_width // 2, image_rect.bottom + 24))
             add_layer(text_surface, text_rect, key='cocktail_name')
             if ALLOW_FAVORITES:
                 if current_cocktail.get('favorite', False) and favorite_logo:

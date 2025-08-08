@@ -1,3 +1,4 @@
+import os
 import json
 import logging
 from openai import OpenAI, OpenAIError
@@ -11,10 +12,10 @@ logger = logging.getLogger(__name__)
 def get_client(api_key: str | None = None):
     """Get an OpenAI API Client"""
     if not api_key:
-        api_key = settings.OPENAI_API_KEY
+        api_key = os.getenv('OPENAI_API_KEY')
     if not api_key:
         raise OpenAIError('The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable')
-    return OpenAI(api_key=api_key or settings.OPENAI_API_KEY)
+    return OpenAI(api_key=api_key)
 
 
 def generate_cocktails(pump_to_drink: dict, requests_for_bartender: str = '', exclude_existing: bool = True, api_key: str | None = None) -> dict:
@@ -72,6 +73,7 @@ def generate_cocktails(pump_to_drink: dict, requests_for_bartender: str = '', ex
     except Exception as e:
         logger.exception('Error generating cocktails')
         raise e
+
 
 def generate_image(prompt: str, api_key: str | None = None, use_gpt_transparency: bool | None = None) -> str:
     """Generate an image using OpenAI"""

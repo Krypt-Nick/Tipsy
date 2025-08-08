@@ -22,6 +22,14 @@ def load_saved_config():
     return {}
 
 
+# Utility: compute a centered rect for a pygame surface
+# Accepts explicit screen size to allow unit testing without importing display code
+
+def get_centered_rect_for_surface(surface, screen_width, screen_height, offset_x=0, offset_y=0):
+    rect = surface.get_rect(center=(screen_width // 2 + offset_x, screen_height // 2 + offset_y))
+    return rect
+
+
 def save_config(data):
     try:
         with open(settings.CONFIG_FILE, 'w') as f:
@@ -49,6 +57,7 @@ def save_cocktails(data, append=True):
                 cocktails['cocktails'] += data['cocktails']
             else:
                 cocktails = data
+            # Favorites first while preserving input order otherwise
             cocktails['cocktails'] = sorted(cocktails['cocktails'], key=lambda cocktail: not cocktail.get('favorite', False))
             json.dump(cocktails, f, indent=2)
     except Exception as e:
@@ -71,9 +80,12 @@ def get_cocktail_image_path(cocktail):
 def get_valid_cocktails():
     """Get the list of cocktails that have images associated with them."""
     cocktail_data = load_cocktails().get('cocktails', [])
+    existing_files = {f.lower() for f in os.listdir(settings.LOGO_FOLDER)} if os.path.isdir(settings.LOGO_FOLDER) else set()
     cocktails = []
     for cocktail in cocktail_data:
-        if os.path.exists(get_cocktail_image_path(cocktail)):
+        safe_name = get_safe_name(cocktail.get("normal_name", ""))
+        # Accept case-insensitive matches
+        if safe_name in existing_files:
             cocktails.append(cocktail)
     return cocktails
 
@@ -83,7 +95,13 @@ def favorite_cocktail(cocktail_index):
     cocktails = get_valid_cocktails()
     cocktail = cocktails[cocktail_index]
     cocktail['favorite'] = True
-    save_cocktails({'cocktails': cocktails}, append=False)
+    # Rebuild full list with updated favorite flag
+    full = load_cocktails()
+    for i, c in enumerate(full['cocktails']):
+        if c.get('normal_name') == cocktail.get('normal_name'):
+            full['cocktails'][i] = cocktail
+            break
+    save_cocktails(full, append=False)
     return get_valid_cocktails().index(cocktail)
 
 
@@ -92,7 +110,12 @@ def unfavorite_cocktail(cocktail_index):
     cocktails = get_valid_cocktails()
     cocktail = cocktails[cocktail_index]
     cocktail['favorite'] = False
-    save_cocktails({'cocktails': cocktails}, append=False)
+    full = load_cocktails()
+    for i, c in enumerate(full['cocktails']):
+        if c.get('normal_name') == cocktail.get('normal_name'):
+            full['cocktails'][i] = cocktail
+            break
+    save_cocktails(full, append=False)
     return get_valid_cocktails().index(cocktail)
 
 

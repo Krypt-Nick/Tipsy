@@ -38,11 +38,11 @@ settings = {
     }, 
     'COCKTAIL_IMAGE_SCALE': {
         'parse_method': float,
-        'default': '0.7'
+        'default': '1.0'
     }, 
     'INVERT_PUMP_PINS': {
         'parse_method': json.loads,
-        'default': 'true'
+        'default': 'false'
     }, 
     'FULL_SCREEN': {
         'parse_method': json.loads,
@@ -59,6 +59,14 @@ settings = {
     'ALLOW_FAVORITES': {
         'parse_method': json.loads,
         'default': 'false'
+    },
+    'WINDOW_WIDTH': {
+        'parse_method': int,
+        'default': '720'
+    },
+    'WINDOW_HEIGHT': {
+        'parse_method': int,
+        'default': '720'
     }
 }
 for name in settings:
