@@ -1,16 +1,4 @@
-﻿Designator,Footprint,Quantity,Value,LCSC Part #
-J1,PinSocket_2x20_P2.54mm_Vertical,1,GPIO,
-J10,JST_EH_B2B-EH-A_1x02_P2.50mm_Vertical,1,Pump 11,
-J11,JST_EH_B2B-EH-A_1x02_P2.50mm_Vertical,1,Pump 10,
-J12,JST_EH_B2B-EH-A_1x02_P2.50mm_Vertical,1,Pump 9,
-J13,JST_EH_B2B-EH-A_1x02_P2.50mm_Vertical,1,Pump 8,
-J14,JST_EH_B2B-EH-A_1x02_P2.50mm_Vertical,1,Power,
-J2,JST_EH_B2B-EH-A_1x02_P2.50mm_Vertical,1,Pump 1,
-J3,JST_EH_B2B-EH-A_1x02_P2.50mm_Vertical,1,Pump 2,
-J4,JST_EH_B2B-EH-A_1x02_P2.50mm_Vertical,1,Pump 3,
-J5,JST_EH_B2B-EH-A_1x02_P2.50mm_Vertical,1,Pump 4,
-J6,JST_EH_B2B-EH-A_1x02_P2.50mm_Vertical,1,Pump 5,
-J7,JST_EH_B2B-EH-A_1x02_P2.50mm_Vertical,1,Pump 6,
-J8,JST_EH_B2B-EH-A_1x02_P2.50mm_Vertical,1,Pump 7,
-J9,JST_EH_B2B-EH-A_1x02_P2.50mm_Vertical,1,Pump 12,
-"U10, U11, U12, U13, U2, U3, U4, U5, U6, U7, U8, U9",SOIC127P599X172-8N,12,L9110S,
+Designator,Footprint,Quantity,Value,LCSC Part #
+J1,HDR-TH_40P-P2.54-V-F-R2-C20-S2.54-2,1,GPIO,C5124634
+J2-14,CONN-TH_B2B-EH-A-LF-SN,13,Pump / Power,C160262
+U2-13,SOP-8_L4.9-W3.9-P1.27-LS6.0-BL,12,L9110S / Motor Driver,C513306
