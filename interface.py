@@ -1093,10 +1093,22 @@ def run_interface():
             else:
                 return None
         
-        # Regular cocktail image loading
+        # Regular cocktail image loading (case-insensitive on filesystems)
         path = get_cocktail_image_path(cocktail)
         try:
-            img = pygame.image.load(path)
+            # Resolve path case-insensitively for Linux/Pi
+            logo_dir = os.path.dirname(path)
+            expected = os.path.basename(path).lower()
+            resolved_path = None
+            if os.path.isdir(logo_dir):
+                for fname in os.listdir(logo_dir):
+                    if fname.lower() == expected:
+                        resolved_path = os.path.join(logo_dir, fname)
+                        break
+            if not resolved_path:
+                logger.error(f"Logo not found (case-insensitive): {path}")
+                return None
+            img = pygame.image.load(resolved_path)
             common_scale = 0.5  # Scale all cocktails by 50% to match QR sizing
             img = pygame.transform.scale(
                 img,
@@ -1437,17 +1449,19 @@ def run_interface():
                                 key='current_cocktail'
                             )
                             if drag_offset < 0:
-                                add_layer(
-                                    next_image,
-                                    get_centered_rect_for_surface(next_image, screen_width, screen_height, offset_x=screen_width + current_offset).topleft,
-                                    key='next_cocktail'
-                                )
+                                if next_image is not None:
+                                    add_layer(
+                                        next_image,
+                                        get_centered_rect_for_surface(next_image, screen_width, screen_height, offset_x=screen_width + current_offset).topleft,
+                                        key='next_cocktail'
+                                    )
                             else:
-                                add_layer(
-                                    previous_image,
-                                    get_centered_rect_for_surface(previous_image, screen_width, screen_height, offset_x=-screen_width + current_offset).topleft,
-                                    key='previous_cocktail'
-                                )
+                                if previous_image is not None:
+                                    add_layer(
+                                        previous_image,
+                                        get_centered_rect_for_surface(previous_image, screen_width, screen_height, offset_x=-screen_width + current_offset).topleft,
+                                        key='previous_cocktail'
+                                    )
                             draw_frame()
                             if progress >= 1.0:
                                 break
@@ -1504,17 +1518,19 @@ def run_interface():
                 key='current_cocktail'
             )
             if drag_offset < 0:
-                add_layer(
-                    next_image,
-                    get_centered_rect_for_surface(next_image, screen_width, screen_height, offset_x=screen_width + drag_offset).topleft,
-                    key='next_cocktail'
-                )
+                if next_image is not None:
+                    add_layer(
+                        next_image,
+                        get_centered_rect_for_surface(next_image, screen_width, screen_height, offset_x=screen_width + drag_offset).topleft,
+                        key='next_cocktail'
+                    )
             elif drag_offset > 0:
-                add_layer(
-                    previous_image,
-                    get_centered_rect_for_surface(previous_image, screen_width, screen_height, offset_x=-screen_width + drag_offset).topleft,
-                    key='previous_cocktail'
-                )
+                if previous_image is not None:
+                    add_layer(
+                        previous_image,
+                        get_centered_rect_for_surface(previous_image, screen_width, screen_height, offset_x=-screen_width + drag_offset).topleft,
+                        key='previous_cocktail'
+                    )
         else:
             remove_layer('next_cocktail')
             remove_layer('previous_cocktail')
