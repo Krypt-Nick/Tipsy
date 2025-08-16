@@ -13,158 +13,7 @@ from controller import make_drink
 import logging
 logger = logging.getLogger(__name__)
 
-class CustomDropdown:
-    """Custom dropdown implementation to replace pygame_widgets"""
-    def __init__(self, x, y, width, height, options, current_value="", font_size=18):
-        self.rect = pygame.Rect(x, y, width, height)
-        self.options = options
-        self.current_value = current_value
-        self.font = pygame.font.SysFont(None, font_size)
-        self.is_open = False
-        self.selected_index = 0
-        self.scroll_offset = 0
-        self.max_visible_items = 5
-        self.item_height = 30
-        
-        # Find current value index
-        if current_value in options:
-            self.selected_index = options.index(current_value)
-    
-    def handle_event(self, event):
-        """Handle mouse events for the dropdown"""
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if self.rect.collidepoint(event.pos):
-                self.is_open = not self.is_open
-                return True
-            elif self.is_open:
-                # Check if clicking on dropdown items
-                dropdown_rect = pygame.Rect(
-                    self.rect.x, 
-                    self.rect.y + self.rect.height,
-                    self.rect.width, 
-                    min(len(self.options), self.max_visible_items) * self.item_height
-                )
-                if dropdown_rect.collidepoint(event.pos):
-                    # Calculate which item was clicked
-                    relative_y = event.pos[1] - dropdown_rect.y
-                    item_index = relative_y // self.item_height + self.scroll_offset
-                    if 0 <= item_index < len(self.options):
-                        self.selected_index = item_index
-                        self.current_value = self.options[item_index]
-                        self.is_open = False
-                        return True
-                else:
-                    self.is_open = False
-        
-        elif event.type == pygame.MOUSEWHEEL and self.is_open:
-            # Handle scrolling in dropdown
-            dropdown_rect = pygame.Rect(
-                self.rect.x, 
-                self.rect.y + self.rect.height,
-                self.rect.width, 
-                min(len(self.options), self.max_visible_items) * self.item_height
-            )
-            if dropdown_rect.collidepoint(pygame.mouse.get_pos()):
-                self.scroll_offset = max(0, min(
-                    len(self.options) - self.max_visible_items,
-                    self.scroll_offset - event.y
-                ))
-                return True
-        
-        return False
-    
-    def draw(self, surface):
-        """Draw the dropdown"""
-        # Draw main dropdown button
-        pygame.draw.rect(surface, (240, 240, 240), self.rect)
-        pygame.draw.rect(surface, (100, 100, 100), self.rect, 2)
-        
-        # Draw current selection text
-        display_text = self.current_value if self.current_value else "Select..."
-        if len(display_text) > 20:
-            display_text = display_text[:17] + "..."
-        text_surface = self.font.render(display_text, True, (0, 0, 0))
-        text_rect = text_surface.get_rect(center=(self.rect.centerx, self.rect.centery))
-        surface.blit(text_surface, text_rect)
-        
-        # Draw dropdown arrow
-        arrow_points = [
-            (self.rect.right - 20, self.rect.centery - 5),
-            (self.rect.right - 10, self.rect.centery + 5),
-            (self.rect.right - 30, self.rect.centery + 5)
-        ]
-        pygame.draw.polygon(surface, (0, 0, 0), arrow_points)
-        
-        # Draw dropdown list if open
-        if self.is_open:
-            visible_items = min(len(self.options), self.max_visible_items)
-            dropdown_rect = pygame.Rect(
-                self.rect.x, 
-                self.rect.y + self.rect.height,
-                self.rect.width, 
-                visible_items * self.item_height
-            )
-            
-            # Draw dropdown background
-            pygame.draw.rect(surface, (255, 255, 255), dropdown_rect)
-            pygame.draw.rect(surface, (100, 100, 100), dropdown_rect, 2)
-            
-            # Draw items
-            for i in range(visible_items):
-                item_index = i + self.scroll_offset
-                if item_index >= len(self.options):
-                    break
-                    
-                item_rect = pygame.Rect(
-                    dropdown_rect.x,
-                    dropdown_rect.y + i * self.item_height,
-                    dropdown_rect.width,
-                    self.item_height
-                )
-                
-                # Highlight selected item
-                if item_index == self.selected_index:
-                    pygame.draw.rect(surface, (200, 220, 255), item_rect)
-                
-                # Highlight hovered item
-                mouse_pos = pygame.mouse.get_pos()
-                if item_rect.collidepoint(mouse_pos):
-                    pygame.draw.rect(surface, (230, 240, 255), item_rect)
-                
-                # Draw item text
-                item_text = self.options[item_index]
-                if len(item_text) > 25:
-                    item_text = item_text[:22] + "..."
-                text_surface = self.font.render(item_text, True, (0, 0, 0))
-                text_rect = text_surface.get_rect(center=item_rect.center)
-                surface.blit(text_surface, text_rect)
-                
-                # Draw separator line
-                if i < visible_items - 1:
-                    pygame.draw.line(surface, (200, 200, 200), 
-                                   (item_rect.left, item_rect.bottom), 
-                                   (item_rect.right, item_rect.bottom))
-            
-            # Draw scrollbar if needed
-            if len(self.options) > self.max_visible_items:
-                scrollbar_rect = pygame.Rect(
-                    dropdown_rect.right - 10,
-                    dropdown_rect.y,
-                    10,
-                    dropdown_rect.height
-                )
-                pygame.draw.rect(surface, (200, 200, 200), scrollbar_rect)
-                
-                # Calculate scrollbar thumb
-                thumb_height = max(20, dropdown_rect.height * self.max_visible_items // len(self.options))
-                thumb_y = dropdown_rect.y + (dropdown_rect.height - thumb_height) * self.scroll_offset // (len(self.options) - self.max_visible_items)
-                thumb_rect = pygame.Rect(scrollbar_rect.x, thumb_y, scrollbar_rect.width, thumb_height)
-                pygame.draw.rect(surface, (100, 100, 100), thumb_rect)
-    
-    def get_selected(self):
-        """Get the currently selected value"""
-        return self.current_value
-
+# Grabs the local IP address of the device for the Streamlit app access
 def get_local_ip():
     """Get the local IP address"""
     try:
@@ -731,313 +580,6 @@ def toggle_pump_direction():
     INVERT_PUMP_PINS = not INVERT_PUMP_PINS
     logger.info(f'Pump direction inverted: {INVERT_PUMP_PINS}')
 
-def create_drink_management_tray():
-    """Create the drink management tray UI elements"""
-    tray_height = int(screen_height * 0.8)  # 80% of screen height
-    tray_rect = pygame.Rect(0, -tray_height, screen_width, tray_height)
-    
-    # Create a gradient background for better aesthetics
-    overlay = pygame.Surface((screen_width, tray_height))
-    overlay.set_alpha(220)
-    # Create gradient effect
-    for y in range(tray_height):
-        alpha = int(255 * (1 - y / tray_height) * 0.8)
-        color = (20, 25, 35)
-        pygame.draw.line(overlay, color, (0, y), (screen_width, y))
-    
-    # Header section with better styling
-    header_height = 80
-    header_surface = pygame.Surface((screen_width, header_height))
-    header_surface.set_alpha(180)
-    header_surface.fill((25, 30, 40))
-    
-    # Title with shadow effect
-    title_font = pygame.font.SysFont('Arial', 42, bold=True)
-    title_shadow = title_font.render("Drink Management", True, (0, 0, 0))
-    title_text = title_font.render("Drink Management", True, (255, 255, 255))
-    title_shadow_rect = title_shadow.get_rect(center=(screen_width // 2 + 2, 42))
-    title_rect = title_text.get_rect(center=(screen_width // 2, 40))
-    
-    # Load drink options
-    try:
-        with open('drink_options.json', 'r') as f:
-            drink_data = json.load(f)
-            drink_options = drink_data['drinks']
-        print(f"Loaded {len(drink_options)} drink options from JSON")
-    except Exception as e:
-        print(f"Error loading drink options: {e}")
-        drink_options = ["", "Vodka", "Gin", "Rum", "Tequila", "Whiskey", "Bourbon", "Scotch", "Brandy", "Cognac"]
-        print(f"Using fallback options: {len(drink_options)} drinks")
-    
-    # Load current pump configuration
-    try:
-        with open(CONFIG_FILE, 'r') as f:
-            current_config = json.load(f)
-    except:
-        current_config = {}
-    
-    # Create custom dropdowns for 12 pumps with better layout
-    dropdowns = []
-    dropdown_width = 180  # Slightly smaller for better fit
-    dropdown_height = 45
-    dropdown_spacing = 25
-    
-    # Calculate positions for a more organized 6x2 grid
-    total_width = 6 * dropdown_width + 5 * dropdown_spacing
-    start_x = (screen_width - total_width) // 2
-    
-    # Top row (pumps 1-6) - with better spacing
-    top_row_y = header_height + 40
-    for i in range(6):
-        x = start_x + i * (dropdown_width + dropdown_spacing)
-        y = top_row_y
-        
-        # Styled pump label
-        label_font = pygame.font.SysFont('Arial', 20, bold=True)
-        label_text = label_font.render(f"Pump {i+1}", True, (220, 220, 220))
-        label_rect = label_text.get_rect(center=(x + dropdown_width // 2, y - 15))
-        
-        # Current selection
-        current_drink = current_config.get(f"Pump {i+1}", "")
-        
-        # Create custom dropdown
-        dropdown = CustomDropdown(
-            x, y, dropdown_width, dropdown_height,
-            drink_options, current_drink, font_size=16
-        )
-        print(f"Created dropdown for Pump {i+1} at ({x}, {y}) with {len(drink_options)} options")
-        
-        dropdowns.append({
-            'dropdown': dropdown,
-            'label_text': label_text,
-            'label_rect': label_rect,
-            'current_value': current_drink,
-            'pump_number': i+1,
-            'rect': pygame.Rect(x, y, dropdown_width, dropdown_height)
-        })
-    
-    # Bottom row (pumps 7-12) - with better spacing
-    bottom_row_y = top_row_y + 120
-    for i in range(6):
-        x = start_x + i * (dropdown_width + dropdown_spacing)
-        y = bottom_row_y
-        
-        # Styled pump label
-        label_font = pygame.font.SysFont('Arial', 20, bold=True)
-        label_text = label_font.render(f"Pump {i+7}", True, (220, 220, 220))
-        label_rect = label_text.get_rect(center=(x + dropdown_width // 2, y - 15))
-        
-        # Current selection
-        current_drink = current_config.get(f"Pump {i+7}", "")
-        
-        # Create custom dropdown
-        dropdown = CustomDropdown(
-            x, y, dropdown_width, dropdown_height,
-            drink_options, current_drink, font_size=16
-        )
-        print(f"Created dropdown for Pump {i+7} at ({x}, {y}) with {len(drink_options)} options")
-        
-        dropdowns.append({
-            'dropdown': dropdown,
-            'label_text': label_text,
-            'label_rect': label_rect,
-            'current_value': current_drink,
-            'pump_number': i+7,
-            'rect': pygame.Rect(x, y, dropdown_width, dropdown_height)
-        })
-    
-    # Styled Generate button at the bottom
-    generate_button_width = 250
-    generate_button_height = 55
-    generate_button_x = (screen_width - generate_button_width) // 2
-    generate_button_y = bottom_row_y + 150
-    
-    generate_button_rect = pygame.Rect(generate_button_x, generate_button_y, generate_button_width, generate_button_height)
-    generate_font = pygame.font.SysFont('Arial', 24, bold=True)
-    generate_text = generate_font.render("Generate New Menu", True, (255, 255, 255))
-    generate_text_rect = generate_text.get_rect(center=generate_button_rect.center)
-    
-    return {
-        'tray_rect': tray_rect,
-        'overlay': overlay,
-        'header_surface': header_surface,
-        'title_text': title_text,
-        'title_shadow': title_shadow,
-        'title_rect': title_rect,
-        'title_shadow_rect': title_shadow_rect,
-        'dropdowns': dropdowns,
-        'generate_button_rect': generate_button_rect,
-        'generate_text': generate_text,
-        'generate_text_rect': generate_text_rect
-    }
-
-def create_drink_management_tab():
-    """Create the small tab at the top for accessing drink management"""
-    tab_width = 80
-    tab_height = 20
-    tab_x = (screen_width - tab_width) // 2
-    tab_y = 0
-    
-    tab_rect = pygame.Rect(tab_x, tab_y, tab_width, tab_height)
-    
-    # Create simple tab surface
-    tab_surface = pygame.Surface((tab_width, tab_height))
-    tab_surface.fill((60, 60, 60))  # Dark gray
-    
-    # Add border for definition
-    pygame.draw.rect(tab_surface, (120, 120, 120), (0, 0, tab_width, tab_height), 2)
-    
-    return {
-        'rect': tab_rect,
-        'surface': tab_surface,
-        'base_y': tab_y,  # Store original position
-        'width': tab_width,
-        'height': tab_height
-    }
-
-def draw_drink_management_tray(drink_ui, is_visible, events=None):
-    """Draw the drink management tray if visible"""
-    if not is_visible:
-        return
-    
-    # Draw gradient background overlay
-    add_layer(drink_ui['overlay'], drink_ui['tray_rect'], key='drink_overlay')
-    
-    # Draw header section
-    header_rect = pygame.Rect(drink_ui['tray_rect'].x, drink_ui['tray_rect'].y, 
-                             drink_ui['tray_rect'].width, 80)
-    add_layer(drink_ui['header_surface'], header_rect, key='drink_header')
-    
-    # Draw title with shadow effect
-    add_layer(drink_ui['title_shadow'], drink_ui['title_shadow_rect'], key='drink_title_shadow')
-    add_layer(drink_ui['title_text'], drink_ui['title_rect'], key='drink_title')
-    
-    # Draw pump labels with better styling
-    for dropdown in drink_ui['dropdowns']:
-        add_layer(dropdown['label_text'], dropdown['label_rect'], key=f'label_{dropdown["pump_number"]}')
-    
-    # Note: Custom dropdowns will be drawn after draw_frame() to ensure they're on top
-    
-    # Draw styled generate button with gradient and border
-    button_rect = drink_ui['generate_button_rect']
-    
-    # Button gradient background
-    for i in range(button_rect.height):
-        color_ratio = i / button_rect.height
-        color = (
-            int(40 + (80 - 40) * color_ratio),   # Dark green to lighter green
-            int(120 + (160 - 120) * color_ratio),
-            int(40 + (80 - 40) * color_ratio)
-        )
-        pygame.draw.line(screen, color, 
-                        (button_rect.left, button_rect.top + i), 
-                        (button_rect.right, button_rect.top + i))
-    
-    # Button border and highlight
-    pygame.draw.rect(screen, (100, 200, 100), button_rect, 3)
-    pygame.draw.rect(screen, (150, 220, 150), button_rect, 1)
-    
-    # Button text
-    add_layer(drink_ui['generate_text'], drink_ui['generate_text_rect'], key='generate_text')
-
-def animate_drink_management_tray(drink_ui, drink_tab, show_tray, duration=300):
-    """Animate the drink management tray sliding down or up"""
-    clock = pygame.time.Clock()
-    start_time = pygame.time.get_ticks()
-    tray_height = drink_ui['tray_rect'].height
-    
-    if show_tray:
-        # Slide down from top
-        start_y = -tray_height
-        end_y = 0
-        tab_start_y = drink_tab['base_y']
-        tab_end_y = tray_height - drink_tab['height']
-    else:
-        # Slide up to top
-        start_y = 0
-        end_y = -tray_height
-        tab_start_y = tray_height - drink_tab['height']
-        tab_end_y = drink_tab['base_y']
-    
-    while True:
-        elapsed = pygame.time.get_ticks() - start_time
-        progress = min(elapsed / duration, 1.0)
-        
-        current_y = start_y + (end_y - start_y) * progress
-        drink_ui['tray_rect'].y = current_y
-        
-        # Update tab position to slide with tray
-        tab_current_y = tab_start_y + (tab_end_y - tab_start_y) * progress
-        drink_tab['rect'].y = tab_current_y
-        
-        # Update all related positions
-        drink_ui['title_rect'].y = current_y + 40
-        
-        # Update dropdown positions to match new layout
-        header_height = 80
-        for dropdown in drink_ui['dropdowns']:
-            if dropdown['pump_number'] <= 6:
-                # Top row
-                new_y = current_y + header_height + 40
-                dropdown['rect'].y = new_y
-                dropdown['label_rect'].y = new_y - 15
-                # Update custom dropdown position
-                dropdown['dropdown'].rect.y = new_y
-            else:
-                # Bottom row
-                new_y = current_y + header_height + 40 + 120
-                dropdown['rect'].y = new_y
-                dropdown['label_rect'].y = new_y - 15
-                # Update custom dropdown position
-                dropdown['dropdown'].rect.y = new_y
-        
-        # Update generate button position
-        drink_ui['generate_button_rect'].y = current_y + tray_height - 80
-        drink_ui['generate_text_rect'].center = drink_ui['generate_button_rect'].center
-        
-        # Update tab layer
-        remove_layer('drink_tab')
-        add_layer(drink_tab['surface'], drink_tab['rect'], key='drink_tab')
-        
-        draw_drink_management_tray(drink_ui, True)
-        draw_frame()
-        
-        if progress >= 1.0:
-            break
-        clock.tick(60)
-
-def handle_drink_management_interaction(drink_ui, event, event_pos):
-    """Handle interactions with drink management tray elements"""
-    # Check if generate button is clicked
-    if event.type == pygame.MOUSEBUTTONDOWN and drink_ui['generate_button_rect'].collidepoint(event_pos):
-        return 'generate_menu'
-    
-    # Handle dropdown interactions
-    for dropdown in drink_ui['dropdowns']:
-        if dropdown['dropdown'].handle_event(event):
-            # Check if selection changed
-            new_value = dropdown['dropdown'].get_selected()
-            if new_value != dropdown['current_value']:
-                return f'dropdown_{dropdown["pump_number"]}_{new_value}'
-    
-    return None
-
-def update_dropdown_selection(dropdown, new_value):
-    """Update dropdown selection and save to config"""
-    dropdown['current_value'] = new_value
-    
-    # Save to pump config
-    try:
-        with open(CONFIG_FILE, 'r') as f:
-            config = json.load(f)
-    except:
-        config = {}
-    
-    config[f"Pump {dropdown['pump_number']}"] = new_value
-    
-    with open(CONFIG_FILE, 'w') as f:
-        json.dump(config, f, indent=2)
-
 def generate_new_drink_menu():
     """Generate a new drink menu using OpenAI"""
     import openai
@@ -1206,18 +748,8 @@ def run_interface():
     tab_dragging = False
     tab_drag_start_y = 0
     
-    # Initialize drink management tray and tab
-    drink_ui = create_drink_management_tray()
-    drink_tab = create_drink_management_tab()
-    drink_visible = False
-    drink_tab_dragging = False
-    drink_tab_drag_start_y = 0
-    dropdown_open = None
-    generating_menu = False
-    
     # Add tabs to layers
     add_layer(settings_tab['surface'], settings_tab['rect'], key='settings_tab')
-    add_layer(drink_tab['surface'], drink_tab['rect'], key='drink_tab')
 
     dragging = False
     drag_start_x = 0
@@ -1241,13 +773,7 @@ def run_interface():
         events = pygame.event.get()
         for event in events:
             # Handle dropdown events globally if drink tray is visible
-            if drink_visible:
-                for dropdown in drink_ui['dropdowns']:
-                    if dropdown['dropdown'].handle_event(event):
-                        # Check if selection changed
-                        new_value = dropdown['dropdown'].get_selected()
-                        if new_value != dropdown['current_value']:
-                            update_dropdown_selection(dropdown, new_value)
+            # The drink management tray is removed, so this block is no longer relevant.
             
             if event.type == pygame.QUIT:
                 running = False
@@ -1255,37 +781,10 @@ def run_interface():
                 if event.key == pygame.K_q or event.key == pygame.K_ESCAPE:
                     running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
-                # Check if drink management tab is clicked or dragged
-                if drink_tab['rect'].collidepoint(event.pos):
-                    drink_tab_dragging = True
-                    drink_tab_drag_start_y = event.pos[1]
-                    continue
-                
                 # Check if settings tab is clicked or dragged
                 if settings_tab['rect'].collidepoint(event.pos):
                     tab_dragging = True
                     tab_drag_start_y = event.pos[1]
-                    continue
-                
-                # Check if drink management tray is clicked
-                if drink_visible and drink_ui['tray_rect'].collidepoint(event.pos):
-                    interaction = handle_drink_management_interaction(drink_ui, event, event.pos)
-                    if interaction == 'generate_menu':
-                        generating_menu = True
-                        # Start generation in a separate thread
-                        import threading
-                        def generate_thread():
-                            global drink_ui, generating_menu
-                            new_drinks = generate_new_drink_menu()
-                            if new_drinks:
-                                drink_ui = create_drink_management_tray()  # Refresh with new options
-                                logger.info("Drink menu generated successfully")
-                            else:
-                                logger.error("Failed to generate new drink menu")
-                            generating_menu = False
-                        
-                        thread = threading.Thread(target=generate_thread)
-                        thread.start()
                     continue
                 
                 # Check if settings tray is clicked
@@ -1306,12 +805,6 @@ def run_interface():
                         toggle_pump_direction()
                     continue
                 
-                # If drink management is visible and clicked outside, close it
-                if drink_visible:
-                    drink_visible = False
-                    animate_drink_management_tray(drink_ui, drink_tab, drink_visible)
-                    continue
-                
                 # If settings is visible and clicked outside, close it
                 if settings_visible:
                     settings_visible = False
@@ -1321,22 +814,7 @@ def run_interface():
                 dragging = True
                 drag_start_x = event.pos[0]
             if event.type == pygame.MOUSEMOTION:
-                if drink_tab_dragging:
-                    # Handle drink tab drag to open/close drink management
-                    current_y = event.pos[1]
-                    drag_distance = drink_tab_drag_start_y - current_y
-                    
-                    # If dragged down enough, open drink management
-                    if drag_distance < -50 and not drink_visible:
-                        drink_visible = True
-                        animate_drink_management_tray(drink_ui, drink_tab, drink_visible)
-                        drink_tab_dragging = False
-                    # If dragged up enough, close drink management  
-                    elif drag_distance > 30 and drink_visible:
-                        drink_visible = False
-                        animate_drink_management_tray(drink_ui, drink_tab, drink_visible)
-                        drink_tab_dragging = False
-                elif tab_dragging:
+                if tab_dragging:
                     # Handle tab drag to open/close settings
                     current_y = event.pos[1]
                     drag_distance = tab_drag_start_y - current_y
@@ -1365,16 +843,7 @@ def run_interface():
                     current_x = event.pos[0]
                     drag_offset = current_x - drag_start_x
             if event.type == pygame.MOUSEBUTTONUP:
-                if drink_tab_dragging:
-                    # If drink tab was clicked without significant drag, toggle drink management
-                    current_y = event.pos[1]
-                    drag_distance = abs(drink_tab_drag_start_y - current_y)
-                    if drag_distance < 10:  # Minimal movement, treat as click
-                        drink_visible = not drink_visible
-                        animate_drink_management_tray(drink_ui, drink_tab, drink_visible)
-                    drink_tab_dragging = False
-                    continue
-                elif tab_dragging:
+                if tab_dragging:
                     # If tab was clicked without significant drag, toggle settings
                     current_y = event.pos[1]
                     drag_distance = abs(tab_drag_start_y - current_y)
@@ -1555,18 +1024,6 @@ def run_interface():
                     add_layer(unfavorite_logo, favorite_rect, key='favorite_logo')
         
         # Update tab positions when not animating
-        if not drink_tab_dragging:
-            if drink_visible:
-                # Tab should be at the bottom of the tray
-                drink_tab['rect'].y = drink_ui['tray_rect'].y + drink_ui['tray_rect'].height
-            else:
-                # Tab should be at the top
-                drink_tab['rect'].y = drink_tab['base_y']
-            
-            # Update drink tab layer
-            remove_layer('drink_tab')
-            add_layer(drink_tab['surface'], drink_tab['rect'], key='drink_tab')
-        
         if not tab_dragging:
             if settings_visible:
                 # Tab should be at the top of the tray
@@ -1579,23 +1036,6 @@ def run_interface():
             remove_layer('settings_tab')
             add_layer(settings_tab['surface'], settings_tab['rect'], key='settings_tab')
         
-        # Draw drink management tray if visible
-        if drink_visible:
-            draw_drink_management_tray(drink_ui, True, events)
-            
-            # Handle custom dropdown selections
-            for dropdown in drink_ui['dropdowns']:
-                if dropdown['dropdown'].get_selected() != dropdown['current_value']:
-                    new_value = dropdown['dropdown'].get_selected()
-                    update_dropdown_selection(dropdown, new_value)
-            
-            # Show loading animation if generating
-            if generating_menu:
-                loading_font = pygame.font.SysFont(None, 24)
-                loading_text = loading_font.render("Generating new drink menu...", True, (255, 255, 0))
-                loading_rect = loading_text.get_rect(center=(screen_width // 2, drink_ui['tray_rect'].y + drink_ui['tray_rect'].height - 40))
-                add_layer(loading_text, loading_rect, key='loading_text')
-        
         # Draw settings tray if visible
         if settings_visible:
             draw_settings_tray(settings_ui, True)
@@ -1603,12 +1043,7 @@ def run_interface():
         draw_frame()
         
         # Draw custom dropdowns AFTER draw_frame() so they appear on top
-        if drink_visible:
-            for dropdown in drink_ui['dropdowns']:
-                # Debug: print dropdown info
-                print(f"Drawing dropdown for Pump {dropdown['pump_number']}: {len(dropdown['dropdown'].options)} options")
-                dropdown['dropdown'].draw(screen)
-            pygame.display.flip()  # Update display after drawing dropdowns
+        # The drink management tray is removed, so this block is no longer relevant.
         
         clock.tick(60)
     pygame.quit()
