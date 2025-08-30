@@ -4,6 +4,8 @@ import base64
 import streamlit as st
 from dotenv import set_key
 import assist
+import shutil
+import datetime
 
 from settings import *
 from helpers import *
@@ -43,7 +45,7 @@ if os.path.exists(COCKTAILS_FILE):
 
 
 # ---------- Tabs ----------
-tabs = st.tabs(['My Bar', 'Settings', 'Cocktail Menu', 'Add Cocktail'])
+tabs = st.tabs(['My Bar', 'Settings', 'History', 'Cocktail Menu', 'Add Cocktail'])
 
 # ================ TAB 1: My Bar ================
 with tabs[0]:
@@ -123,6 +125,14 @@ with tabs[0]:
         except Exception as e:
             st.warning(f'Could not send refresh signal to interface: {e}')
 
+        timestamp = datetime.datetime.now().isoformat().replace(':', '-').split('.')[0]
+        hist_dir = f'history/{timestamp}'
+        os.makedirs(hist_dir, exist_ok=True)
+        shutil.copy('pump_config.json', f'{hist_dir}/pump_config.json')
+        shutil.copy('cocktails.json', f'{hist_dir}/cocktails.json')
+        shutil.copytree('drink_logos', f'{hist_dir}/drink_logos')
+
+
 # ================ TAB 2: Settings ================
 with tabs[1]:
     st.title('Settings')
@@ -165,6 +175,41 @@ with tabs[1]:
 
 # ================ TAB 3: Cocktail Menu ================
 with tabs[2]:
+    st.title('History')
+    if not os.path.exists('history') or not os.listdir('history'):
+        st.info('No historical menus yet.')
+    else:
+        hist_dirs = sorted([d for d in os.listdir('history') if os.path.isdir(os.path.join('history', d))], reverse=True)
+        for hist_dir in hist_dirs:
+            try:
+                with open(f'history/{hist_dir}/cocktails.json', 'r') as f:
+                    cocktails = json.load(f)
+                drink_names = ', '.join([c['normal_name'] for c in cocktails.get('cocktails', [])])
+                with open(f'history/{hist_dir}/pump_config.json', 'r') as f:
+                    pump_config = json.load(f)
+                config_str = ', '.join([f"{k}: {v}" for k,v in pump_config.items()])
+                st.subheader(f"{hist_dir}: {drink_names}")
+                st.text(config_str)
+                if st.button('Reload Cocktail Menu', key=f'reload_{hist_dir}'):
+                    shutil.copy(f'history/{hist_dir}/pump_config.json', 'pump_config.json')
+                    shutil.copy(f'history/{hist_dir}/cocktails.json', 'cocktails.json')
+                    if os.path.exists('drink_logos'):
+                        shutil.rmtree('drink_logos')
+                    shutil.copytree(f'history/{hist_dir}/drink_logos', 'drink_logos')
+                    import time
+                    refresh_signal = {
+                        'action': 'refresh_cocktails',
+                        'timestamp': time.time()
+                    }
+                    with open('interface_signal.json', 'w') as f:
+                        json.dump(refresh_signal, f)
+                    st.success('Menu reloaded from history!')
+                    st.rerun()
+            except Exception as e:
+                st.error(f'Error loading {hist_dir}: {e}')
+
+
+with tabs[3]:
     st.markdown('<h1 style="text-align: center;">Cocktail Menu</h1>', unsafe_allow_html=True)
 
     if st.session_state.selected_cocktail:
@@ -303,7 +348,7 @@ with tabs[2]:
             st.markdown('<p style="text-align: center;">No recipes generated yet. Please use the "My Bar" tab to generate recipes.</p>', unsafe_allow_html=True)
 
 # ================ TAB 4: Add Cocktail ================
-with tabs[3]:
+with tabs[4]:
     st.markdown('<h1 style="text-align: center;">Add Cocktail</h1>', unsafe_allow_html=True)
     st.markdown('<h2 style="text-align: center;">Recipe</h2>', unsafe_allow_html=True)
     recipe = {
