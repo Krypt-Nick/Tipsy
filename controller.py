@@ -12,7 +12,7 @@ from settings import *
 if not DEBUG:
     try:
         from gpiozero import OutputDevice
-        from gpiozero.pins.pigpio import PiGPIOFactory
+        from gpiozero.pins.lg import LGPIOFactory
     except ModuleNotFoundError:
         DEBUG = True
         logger.info('Controller modules not found. Pump control will be disabled')
@@ -36,17 +36,15 @@ MOTORS = [
     (15, 14),  # Pump 12
 ]
 
-
 def setup_gpio():
     """Set up all motor pins for OUTPUT."""
     if DEBUG:
         logger.debug('setup_gpio() called — Not actually initializing GPIO pins.')
     else:
-        factory = PiGPIOFactory()
+        factory = LGPIOFactory(chip=0)  # Workaround for Pi 5 kernel GPIO chip numbering
         for ia, ib in MOTORS:
             pin_devices[ia] = OutputDevice(ia, pin_factory=factory, active_high=True, initial_value=False)
             pin_devices[ib] = OutputDevice(ib, pin_factory=factory, active_high=True, initial_value=False)
-
 
 def motor_forward(ia, ib):
     """Drive motor forward."""

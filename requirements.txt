@@ -1,4 +1,3 @@
-
 streamlit
 pygame
 gpiozero
@@ -10,4 +9,3 @@ rembg
 onnxruntime
 qrcode[pil]
 pytest
-pigpio
