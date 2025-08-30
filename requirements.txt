@@ -1,6 +1,6 @@
 streamlit
 pygame
-RPi.GPIO
+gpiozero
 python-dotenv
 requests
 openai

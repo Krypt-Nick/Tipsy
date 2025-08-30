@@ -11,10 +11,12 @@ from settings import *
 
 if not DEBUG:
     try:
-        import RPi.GPIO as GPIO
+        from gpiozero import OutputDevice
     except ModuleNotFoundError:
         DEBUG = True
         logger.info('Controller modules not found. Pump control will be disabled')
+
+pin_devices = {}
 
 # Define GPIO pins for each motor here (same as your test).
 # Adjust these if needed to match your hardware.
@@ -39,10 +41,9 @@ def setup_gpio():
     if DEBUG:
         logger.debug('setup_gpio() called — Not actually initializing GPIO pins.')
     else:
-        GPIO.setmode(GPIO.BCM)
         for ia, ib in MOTORS:
-            GPIO.setup(ia, GPIO.OUT)
-            GPIO.setup(ib, GPIO.OUT)
+            pin_devices[ia] = OutputDevice(ia, active_high=True, initial_value=False)
+            pin_devices[ib] = OutputDevice(ib, active_high=True, initial_value=False)
 
 
 def motor_forward(ia, ib):
@@ -50,12 +51,14 @@ def motor_forward(ia, ib):
     if DEBUG:
         logger.debug(f'motor_forward(ia={ia}, ib={ib}) called — No actual motor movement.')
     else:
+        dev_a = pin_devices[ia]
+        dev_b = pin_devices[ib]
         if INVERT_PUMP_PINS:
-            GPIO.output(ia, GPIO.LOW)
-            GPIO.output(ib, GPIO.HIGH)
+            dev_a.off()
+            dev_b.on()
         else:
-            GPIO.output(ia, GPIO.HIGH)
-            GPIO.output(ib, GPIO.LOW)
+            dev_a.on()
+            dev_b.off()
 
 
 def motor_stop(ia, ib):
@@ -63,20 +66,22 @@ def motor_stop(ia, ib):
     if DEBUG:
         logger.debug(f'motor_stop(ia={ia}, ib={ib}) called — No actual motor movement.')
     else:
-        GPIO.output(ia, GPIO.LOW)
-        GPIO.output(ib, GPIO.LOW)
+        pin_devices[ia].off()
+        pin_devices[ib].off()
 
 
 def motor_reverse(ia,ib):
     if DEBUG:
         logger.debug(f'motor_reverse(ia={ia}, ib={ib}) called — No actual motor movement.')
     else:
+        dev_a = pin_devices[ia]
+        dev_b = pin_devices[ib]
         if INVERT_PUMP_PINS:
-            GPIO.output(ia,GPIO.HIGH)
-            GPIO.output(ib,GPIO.LOW)
+            dev_a.on()
+            dev_b.off()
         else:
-            GPIO.output(ia,GPIO.LOW)
-            GPIO.output(ib,GPIO.HIGH)
+            dev_a.off()
+            dev_b.on()
 
 
 class Pour:
@@ -124,7 +129,9 @@ def prime_pumps(duration=10):
             motor_stop(ia, ib)
     finally:
         if not DEBUG:
-            GPIO.cleanup()
+            for dev in pin_devices.values():
+                dev.close()
+            pin_devices.clear()
         else:
             logger.debug('prime_pumps() complete — no GPIO cleanup in debug mode.')
 
@@ -143,7 +150,9 @@ def clean_pumps(duration=10):
             motor_stop(ia, ib)
     finally:
         if not DEBUG:
-            GPIO.cleanup()
+            for dev in pin_devices.values():
+                dev.close()
+            pin_devices.clear()
         else:
             logger.debug('clean_pumps() complete no GPIO cleanup in debug mode.')
 
@@ -214,7 +223,9 @@ def pour_ingredients(ingredients, single_or_double, pump_config, parent_watcher)
         pass
     
     if not DEBUG:
-        GPIO.cleanup()
+        for dev in pin_devices.values():
+            dev.close()
+        pin_devices.clear()
     else:
         logger.debug('pour_ingredients() complete — no GPIO cleanup in debug mode.')
         
