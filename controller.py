@@ -12,6 +12,7 @@ from settings import *
 if not DEBUG:
     try:
         from gpiozero import OutputDevice
+        from gpiozero.pins.pigpio import PiGPIOFactory
     except ModuleNotFoundError:
         DEBUG = True
         logger.info('Controller modules not found. Pump control will be disabled')
@@ -41,9 +42,10 @@ def setup_gpio():
     if DEBUG:
         logger.debug('setup_gpio() called — Not actually initializing GPIO pins.')
     else:
+        factory = PiGPIOFactory()
         for ia, ib in MOTORS:
-            pin_devices[ia] = OutputDevice(ia, active_high=True, initial_value=False)
-            pin_devices[ib] = OutputDevice(ib, active_high=True, initial_value=False)
+            pin_devices[ia] = OutputDevice(ia, pin_factory=factory, active_high=True, initial_value=False)
+            pin_devices[ib] = OutputDevice(ib, pin_factory=factory, active_high=True, initial_value=False)
 
 
 def motor_forward(ia, ib):
