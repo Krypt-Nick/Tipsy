@@ -41,7 +41,7 @@ def setup_gpio():
     if DEBUG:
         logger.debug('setup_gpio() called — Not actually initializing GPIO pins.')
     else:
-        factory = LGPIOFactory(chip=0)  # Workaround for Pi 5 kernel GPIO chip numbering
+        factory = LGPIOFactory(chip=4)  # Workaround for Pi 5 kernel GPIO chip numbering
         for ia, ib in MOTORS:
             pin_devices[ia] = OutputDevice(ia, pin_factory=factory, active_high=True, initial_value=False)
             pin_devices[ib] = OutputDevice(ib, pin_factory=factory, active_high=True, initial_value=False)
