@@ -5,6 +5,69 @@ import requests
 import base64
 import assist
 
+import time
+import logging
+from gpiozero import OutputDevice
+from gpiozero.pins.lgpio import LGPIOFactory
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Pins for Pump 1 (adjust if needed)
+IA = 17
+IB = 4
+
+# Use LGPIOFactory for RPi5 compatibility
+factory = LGPIOFactory()
+
+# Initialize devices
+dev_a = OutputDevice(IA, pin_factory=factory, active_high=True, initial_value=False)
+dev_b = OutputDevice(IB, pin_factory=factory, active_high=True, initial_value=False)
+
+try:
+    while True:
+        # Test forward (non-inverted)
+        logger.info(f'Forward (non-inverted): Setting {IA} HIGH, {IB} LOW')
+        dev_a.on()
+        dev_b.off()
+        time.sleep(2)
+
+        # Stop
+        logger.info(f'Stop: Setting both LOW')
+        dev_a.off()
+        dev_b.off()
+        time.sleep(2)
+
+        # Test reverse (non-inverted)
+        logger.info(f'Reverse (non-inverted): Setting {IA} LOW, {IB} HIGH')
+        dev_a.off()
+        dev_b.on()
+        time.sleep(2)
+
+        # Stop
+        logger.info(f'Stop: Setting both LOW')
+        dev_a.off()
+        dev_b.off()
+        time.sleep(2)
+
+        # Test inverted forward
+        logger.info(f'Forward (inverted): Setting {IA} LOW, {IB} HIGH')
+        dev_a.off()
+        dev_b.on()
+        time.sleep(2)
+
+        # Stop and loop
+        dev_a.off()
+        dev_b.off()
+        time.sleep(5)  # Pause before next cycle
+
+except KeyboardInterrupt:
+    dev_a.close()
+    dev_b.close()
+    logger.info('Test stopped.')
+
+
 # ---------- Global Setup ----------
 CONFIG_FILE = "pump_config.json"
 COCKTAILS_FILE = "cocktails.json"
