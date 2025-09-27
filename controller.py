@@ -29,11 +29,11 @@ MOTORS = [
     (13, 6),   # Pump 5
     (26, 19),  # Pump 6
     (20, 21),  # Pump 7
-    (16, 12),  # Pump 8
-    (7, 8),    # Pump 9
+    (15, 14),  # Pump 8
+    (23, 18),  # Pump 9
     (25, 24),  # Pump 10
-    (23, 18),  # Pump 11
-    (15, 14),  # Pump 12
+    (7, 8),    # Pump 11
+    (16, 12),  # Pump 12
 ]
 
 def setup_gpio():
