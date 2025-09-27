@@ -10,6 +10,9 @@ import logging
 from gpiozero import OutputDevice
 from gpiozero.pins.lgpio import LGPIOFactory
 
+# Add import for MOTORS
+from controller import MOTORS
+
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -21,51 +24,56 @@ IB = 4
 # Use LGPIOFactory for RPi5 compatibility
 factory = LGPIOFactory()
 
-# Initialize devices
-dev_a = OutputDevice(IA, pin_factory=factory, active_high=True, initial_value=False)
-dev_b = OutputDevice(IB, pin_factory=factory, active_high=True, initial_value=False)
-
+# Initialize devices and test sequentially
+devices = []
 try:
-    while True:
+    for pump_num, (ia, ib) in enumerate(MOTORS, 1):
+        logger.info(f'Testing Pump {pump_num} with pins {ia} and {ib}')
+        
+        dev_a = OutputDevice(ia, pin_factory=factory, active_high=True, initial_value=False)
+        dev_b = OutputDevice(ib, pin_factory=factory, active_high=True, initial_value=False)
+        devices.extend([dev_a, dev_b])
+        
         # Test forward (non-inverted)
-        logger.info(f'Forward (non-inverted): Setting {IA} HIGH, {IB} LOW')
+        logger.info(f'Forward (non-inverted): Setting {ia} HIGH, {ib} LOW')
         dev_a.on()
         dev_b.off()
         time.sleep(2)
-
+        
         # Stop
         logger.info(f'Stop: Setting both LOW')
         dev_a.off()
         dev_b.off()
         time.sleep(2)
-
+        
         # Test reverse (non-inverted)
-        logger.info(f'Reverse (non-inverted): Setting {IA} LOW, {IB} HIGH')
+        logger.info(f'Reverse (non-inverted): Setting {ia} LOW, {ib} HIGH')
         dev_a.off()
         dev_b.on()
         time.sleep(2)
-
+        
         # Stop
         logger.info(f'Stop: Setting both LOW')
         dev_a.off()
         dev_b.off()
         time.sleep(2)
-
+        
         # Test inverted forward
-        logger.info(f'Forward (inverted): Setting {IA} LOW, {IB} HIGH')
+        logger.info(f'Forward (inverted): Setting {ia} LOW, {ib} HIGH')
         dev_a.off()
         dev_b.on()
         time.sleep(2)
-
-        # Stop and loop
+        
+        # Stop and pause before next pump
         dev_a.off()
         dev_b.off()
-        time.sleep(5)  # Pause before next cycle
-
+        time.sleep(5)
+        
 except KeyboardInterrupt:
-    dev_a.close()
-    dev_b.close()
     logger.info('Test stopped.')
+finally:
+    for dev in devices:
+        dev.close()
 
 
 # ---------- Global Setup ----------
