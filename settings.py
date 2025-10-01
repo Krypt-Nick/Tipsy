@@ -42,7 +42,7 @@ settings = {
     }, 
     'INVERT_PUMP_PINS': {
         'parse_method': json.loads,
-        'default': 'false'
+        'default': 'true'
     }, 
     'FULL_SCREEN': {
         'parse_method': json.loads,
