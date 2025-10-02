@@ -288,6 +288,89 @@ def show_pouring_and_loading(watcher):
     draw_frame()
     pygame.event.clear()  # Drop all events that happened while pouring
 
+def show_top_off_screen(manual_ingredients, cocktail_name, timeout=30000):
+    """Display a screen instructing to top off with manual ingredients."""
+    overlay = pygame.Surface(screen_size)
+    overlay.set_alpha(200)
+    overlay.fill((0, 0, 0))
+    add_layer(overlay, (0, 0), key='top_off_overlay')
+
+    font = pygame.font.SysFont(None, 60)
+    title = font.render(f"Please top off your {cocktail_name} with:", True, (255, 255, 255))
+    title_rect = title.get_rect(center=(screen_width // 2, screen_height // 4))
+    add_layer(title, title_rect, key='top_off_title')
+
+    y_pos = screen_height // 3
+    small_font = pygame.font.SysFont(None, 40)
+    for ing, amt in manual_ingredients.items():
+        text = small_font.render(f"{amt} of {ing}", True, (255, 255, 255))
+        rect = text.get_rect(center=(screen_width // 2, y_pos))
+        add_layer(text, rect, key=f'top_off_{ing}')
+        y_pos += 50
+
+    tap_text = small_font.render("Tap to continue", True, (255, 255, 255))
+    tap_rect = tap_text.get_rect(center=(screen_width // 2, screen_height * 3 // 4))
+    add_layer(tap_text, tap_rect, key='top_off_tap')
+
+    draw_frame()
+
+    start_time = pygame.time.get_ticks()
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                remove_layer('top_off_overlay')
+                remove_layer('top_off_title')
+                remove_layer('top_off_tap')
+                for ing in manual_ingredients:
+                    remove_layer(f'top_off_{ing}')
+                draw_frame()
+                return
+        if pygame.time.get_ticks() - start_time > timeout:
+            remove_layer('top_off_overlay')
+            remove_layer('top_off_title')
+            remove_layer('top_off_tap')
+            for ing in manual_ingredients:
+                remove_layer(f'top_off_{ing}')
+            draw_frame()
+            return
+        clock.tick(60)
+
+def show_enjoy_screen(cocktail_name, timeout=30000):
+    """Display an enjoy screen after pouring."""
+    overlay = pygame.Surface(screen_size)
+    overlay.set_alpha(200)
+    overlay.fill((0, 0, 0))
+    add_layer(overlay, (0, 0), key='enjoy_overlay')
+
+    font = pygame.font.SysFont(None, 60)
+    title = font.render(f"Enjoy your {cocktail_name}!", True, (255, 255, 255))
+    title_rect = title.get_rect(center=(screen_width // 2, screen_height // 2))
+    add_layer(title, title_rect, key='enjoy_title')
+
+    small_font = pygame.font.SysFont(None, 40)
+    tap_text = small_font.render("Tap to continue", True, (255, 255, 255))
+    tap_rect = tap_text.get_rect(center=(screen_width // 2, screen_height * 2 // 3))
+    add_layer(tap_text, tap_rect, key='enjoy_tap')
+
+    draw_frame()
+
+    start_time = pygame.time.get_ticks()
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                remove_layer('enjoy_overlay')
+                remove_layer('enjoy_title')
+                remove_layer('enjoy_tap')
+                draw_frame()
+                return
+        if pygame.time.get_ticks() - start_time > timeout:
+            remove_layer('enjoy_overlay')
+            remove_layer('enjoy_title')
+            remove_layer('enjoy_tap')
+            draw_frame()
+            return
+        clock.tick(60)
+
 def create_settings_tray():
     """Create the settings tray UI elements"""
     tray_height = int(screen_height * 0.4)  # 40% of screen height
@@ -860,22 +943,40 @@ def run_interface():
                     if abs(drag_offset) < 10:
                         pos = event.pos
                         if single_rect.collidepoint(pos):
+                            if current_cocktail.get('is_qr_slide'):
+                                continue
                             # Animate single logo click
                             if single_logo:
                                 animate_logo_click(single_logo, single_rect, base_size=150, target_size=220, layer_key='single_logo', duration=150)
 
-                            executor_watcher = make_drink(current_cocktail, 'single')
+                            executor_watcher, manual_ingredients = make_drink(current_cocktail, 'single')
+                            if executor_watcher is None:
+                                continue
 
-                            show_pouring_and_loading(watcher=executor_watcher)
+                            show_pouring_and_loading(executor_watcher)
+
+                            if manual_ingredients:
+                                show_top_off_screen(manual_ingredients, current_cocktail_name)
+
+                            show_enjoy_screen(current_cocktail_name)
 
                         elif double_rect.collidepoint(pos):
+                            if current_cocktail.get('is_qr_slide'):
+                                continue
                             # Animate double logo click
                             if double_logo:
                                 animate_logo_click(double_logo, double_rect, base_size=150, target_size=220, layer_key='double_logo', duration=150)
 
-                            executor_watcher = make_drink(current_cocktail, 'double')
+                            executor_watcher, manual_ingredients = make_drink(current_cocktail, 'double')
+                            if executor_watcher is None:
+                                continue
 
                             show_pouring_and_loading(executor_watcher)
+
+                            if manual_ingredients:
+                                show_top_off_screen(manual_ingredients, current_cocktail_name)
+
+                            show_enjoy_screen(current_cocktail_name)
                     
                         elif reload_cocktails_rect and reload_cocktails_rect.collidepoint(pos):
                             logger.debug('Reloading cocktails due to reload button press')
