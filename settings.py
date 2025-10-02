@@ -22,7 +22,7 @@ settings = {
     }, 
     'OZ_COEFFICIENT': {
         'parse_method': float,
-        'default': '3.0'
+        'default': '22.0'
     }, 
     'PUMP_CONCURRENCY': {
         'parse_method': int,
