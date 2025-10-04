@@ -6,6 +6,10 @@ from dotenv import set_key
 import assist
 import shutil
 import datetime
+import requests
+from openai import OpenAI
+from PIL import Image
+from io import BytesIO
 
 from settings import *
 from helpers import *
@@ -45,7 +49,7 @@ if os.path.exists(COCKTAILS_FILE):
 
 
 # ---------- Tabs ----------
-tabs = st.tabs(['My Bar', 'Settings', 'History', 'Cocktail Menu', 'Add Cocktail'])
+tabs = st.tabs(['My Bar', 'Settings', 'History', 'Cocktail Menu', 'Add Cocktail', 'Update Image'])
 
 # ================ TAB 1: My Bar ================
 with tabs[0]:
@@ -390,3 +394,97 @@ with tabs[4]:
                 st.success('Cocktail saved and interface refresh signal sent!')
             except Exception as e:
                 st.warning(f'Cocktail saved but could not send refresh signal: {e}')
+
+
+# ================ TAB 5: Update Cocktail Image ================
+with tabs[5]:
+    st.title('Update Cocktail Image')
+
+    cocktails_list = cocktail_data.get('cocktails', [])
+    cocktail_options = ['None'] + [c['normal_name'] for c in cocktails_list]
+    base_cocktail = st.selectbox('Base prompt on existing cocktail?', cocktail_options)
+
+    if base_cocktail != 'None':
+        selected = next(c for c in cocktails_list if c['normal_name'] == base_cocktail)
+        default_name = selected['normal_name']
+        default_ingredients = ', '.join(selected['ingredients'].keys())
+    else:
+        default_name = ''
+        default_ingredients = ''
+
+    cocktail_name = st.text_input('Cocktail Name for Prompt', value=default_name)
+    ingredients_str = st.text_area('Ingredients for Prompt (comma separated)', value=default_ingredients, height=100)
+    additional_instructions = st.text_area('Additional instructions for the image', height=100)
+
+    if 'temp_image_data' not in st.session_state:
+        st.session_state.temp_image_data = None
+
+    api_key = st.session_state.get('openai_api_key') or OPENAI_API_KEY
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button('Generate'):
+            ingredients = [i.strip() for i in ingredients_str.split(',') if i.strip()] if ingredients_str else None
+            prompt = get_image_prompt(cocktail_name or 'custom cocktail', ingredients, USE_GPT_TRANSPARENCY)
+            if additional_instructions:
+                prompt += f" {additional_instructions}"
+            try:
+                b64_str = assist.generate_image(prompt, api_key, USE_GPT_TRANSPARENCY)
+                img_data = base64.b64decode(b64_str)
+                if not USE_GPT_TRANSPARENCY:
+                    from rembg import remove
+                    img = Image.open(BytesIO(img_data))
+                    img = remove(img.convert('RGBA'))
+                    buffered = BytesIO()
+                    img.save(buffered, format="PNG")
+                    img_data = buffered.getvalue()
+                st.session_state.temp_image_data = img_data
+            except Exception as e:
+                st.error(f"Error generating image: {e}")
+    with col2:
+        if st.button('Regenerate'):
+            # Reuse the same prompt logic for regenerate
+            ingredients = [i.strip() for i in ingredients_str.split(',') if i.strip()] if ingredients_str else None
+            prompt = get_image_prompt(cocktail_name or 'custom cocktail', ingredients, USE_GPT_TRANSPARENCY)
+            if additional_instructions:
+                prompt += f" {additional_instructions}"
+            try:
+                b64_str = assist.generate_image(prompt, api_key, USE_GPT_TRANSPARENCY)
+                img_data = base64.b64decode(b64_str)
+                if not USE_GPT_TRANSPARENCY:
+                    from rembg import remove
+                    img = Image.open(BytesIO(img_data))
+                    img = remove(img.convert('RGBA'))
+                    buffered = BytesIO()
+                    img.save(buffered, format="PNG")
+                    img_data = buffered.getvalue()
+                st.session_state.temp_image_data = img_data
+            except Exception as e:
+                st.error(f"Error generating image: {e}")
+
+    if st.session_state.temp_image_data:
+        st.image(st.session_state.temp_image_data, use_container_width=True)
+
+        if st.button('Use this image'):
+            cocktail_options_dict = {c['normal_name']: c for c in cocktails_list}
+            selected_name = st.selectbox('Select cocktail to update image for', list(cocktail_options_dict.keys()))
+            if selected_name and st.button('Confirm update'):
+                selected_cocktail = cocktail_options_dict[selected_name]
+                image_path = get_cocktail_image_path(selected_cocktail)
+                with open(image_path, 'wb') as f:
+                    f.write(st.session_state.temp_image_data)
+                st.success(f'Image updated for {selected_name}!')
+                # Send refresh signal
+                try:
+                    import time
+                    refresh_signal = {
+                        'action': 'refresh_cocktails',
+                        'timestamp': time.time()
+                    }
+                    with open('interface_signal.json', 'w') as f:
+                        json.dump(refresh_signal, f)
+                    st.info('Interface refresh signal sent!')
+                except Exception as e:
+                    st.warning(f'Could not send refresh signal: {e}')
+            st.session_state.temp_image_data = None
+            st.rerun()
