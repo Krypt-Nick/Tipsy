@@ -1,0 +1,52 @@
+{
+  "cocktails": [
+    {
+      "normal_name": "White Russian",
+      "fun_name": "Midnight Dream",
+      "ingredients": {
+        "Vodka": "2 oz",
+        "Coffee Liqueur": "1 oz",
+        "Half and Half": "1 oz"
+      }
+    },
+    {
+      "normal_name": "Chocolate Bourbon Sour",
+      "fun_name": "Cocoa Delight",
+      "ingredients": {
+        "Bourbon": "2 oz",
+        "Lemon Juice": "0.75 oz",
+        "Chocolate Bitters": "2 dashes",
+        "Simple Syrup": "0.5 oz"
+      }
+    },
+    {
+      "normal_name": "Mellow Mountain",
+      "fun_name": "Fizzy Paradise",
+      "ingredients": {
+        "Whisky": "1.5 oz",
+        "Mountain Dew Zero": "3 oz",
+        "Vanilla Syrup": "0.5 oz"
+      }
+    },
+    {
+      "normal_name": "Vanilla Coke Twist",
+      "fun_name": "Sweet Fizz",
+      "ingredients": {
+        "Single Malt Whisky": "1.5 oz",
+        "Coke Zero": "4 oz",
+        "Vanilla Syrup": "0.5 oz"
+      }
+    },
+    {
+      "normal_name": "Apple Pie Collins",
+      "fun_name": "Harvest Breeze",
+      "ingredients": {
+        "Bourbon": "1.5 oz",
+        "Apple Pie": "1 oz",
+        "Lemon Juice": "0.75 oz",
+        "Simple Syrup": "0.5 oz",
+        "Club Soda": "Top off"
+      }
+    }
+  ]
+}

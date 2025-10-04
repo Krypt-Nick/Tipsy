@@ -1,0 +1,54 @@
+{
+  "cocktails": [
+    {
+      "normal_name": "Whisky Sour",
+      "fun_name": "Whisky Wonderland",
+      "ingredients": {
+        "Whisky": "2 oz",
+        "Simple Syrup": "0.5 oz",
+        "Lemon Juice": "1 oz",
+        "Chocolate Bitters": "2 dashes"
+      }
+    },
+    {
+      "normal_name": "Bourbon Smash",
+      "fun_name": "Bourbon Bliss",
+      "ingredients": {
+        "Bourbon": "2 oz",
+        "Simple Syrup": "1 oz",
+        "Mint Leaves": "8 leaves",
+        "Lemon Wedge": "1"
+      }
+    },
+    {
+      "normal_name": "Mountain Dew Cocktail",
+      "fun_name": "Dewy Delight",
+      "ingredients": {
+        "Mountain Dew Zero": "4 oz",
+        "Vodka": "1.5 oz",
+        "Vinilla Syrup": "0.5 oz",
+        "Lime Juice": "0.5 oz"
+      }
+    },
+    {
+      "normal_name": "Chocolate Old Fashioned",
+      "fun_name": "Choco-Loco",
+      "ingredients": {
+        "Single Malt Whisky": "2 oz",
+        "Chocolate Bitters": "3 dashes",
+        "Simple Syrup": "0.5 oz",
+        "Orange Peel": "1"
+      }
+    },
+    {
+      "normal_name": "Apple Pie Cocktail",
+      "fun_name": "Harvest Bliss",
+      "ingredients": {
+        "Whisky": "1.5 oz",
+        "Apple Pie": "2 oz",
+        "Coke Zero": "3 oz",
+        "Vinilla Syrup": "0.5 oz"
+      }
+    }
+  ]
+}

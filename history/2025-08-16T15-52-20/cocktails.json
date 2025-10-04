@@ -1,0 +1,69 @@
+{
+  "cocktails": [
+    {
+      "normal_name": "Dr. Pepper",
+      "fun_name": "Doctor's Tonic",
+      "ingredients": {
+        "Dr. Pepper": "6 oz"
+      }
+    },
+    {
+      "normal_name": "Apple Pie",
+      "fun_name": "Autumn Delight",
+      "ingredients": {
+        "Apple Pie": "6 oz"
+      }
+    },
+    {
+      "normal_name": "Whisky Sour",
+      "fun_name": "Whisky Lovin'",
+      "ingredients": {
+        "whisky": "2 oz",
+        "Simple Syrup": "0.5 oz",
+        "Lime Juice": "0.75 oz"
+      }
+    },
+    {
+      "normal_name": "Gin and Tonic",
+      "fun_name": "Ginsational Splash",
+      "ingredients": {
+        "Gin": "2 oz",
+        "Tonic Water": "4 oz"
+      }
+    },
+    {
+      "normal_name": "Rum Punch",
+      "fun_name": "Tropical Breeze",
+      "ingredients": {
+        "rum": "2 oz",
+        "Simple Syrup": "0.5 oz",
+        "Lime Juice": "0.5 oz"
+      }
+    },
+    {
+      "normal_name": "Tequila Sunrise",
+      "fun_name": "Sunset Bliss",
+      "ingredients": {
+        "tequila": "2 oz",
+        "orange juice": "4 oz",
+        "grenadine": "0.5 oz"
+      }
+    },
+    {
+      "normal_name": "Orange Bitters Cocktail",
+      "fun_name": "Citrus Zing",
+      "ingredients": {
+        "bitters": "2 dashes"
+      }
+    },
+    {
+      "normal_name": "Margarita",
+      "fun_name": "Citrus Snap",
+      "ingredients": {
+        "tequila": "2 oz",
+        "Triple Sec": "1 oz",
+        "Lime Juice": "1 oz"
+      }
+    }
+  ]
+}
