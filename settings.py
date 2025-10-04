@@ -79,36 +79,3 @@ for name in settings:
 
 if DEBUG:
     logging.basicConfig(level=logging.DEBUG)
-
-CARBONATED_INGREDIENTS = {
-    'club soda',
-    'tonic water',
-    'cola',
-    'coca-cola',
-    'coke',
-    'ginger beer',
-    'sparkling water',
-    'soda water',
-    'lemon-lime soda',
-    'ginger ale',
-    "dr. pepper",
-    "mountain dew",
-}
-
-BITTERS_INGREDIENTS = {
-    'angostura bitters',
-    'orange bitters',
-    'aromatic bitters',
-    'peychaud\'s bitters',
-    'bitters',
-    'chocolate bitters',
-    'celery bitters',
-    'lemon bitters',
-}
-
-LAYERING_INGREDIENTS = {
-    'milk',
-    'cream',
-    'heavy cream',
-    'half and half'
-}

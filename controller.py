@@ -238,34 +238,27 @@ def make_drink(recipe, single_or_double="single"):
 
     In debug mode, only prints messages instead of driving motors.
     """
-
     # 1) Load the pump config dictionary, e.g. {"Pump 1": "vodka", "Pump 2": "gin", ...}
     if not os.path.exists(CONFIG_FILE):
         logger.critical(f'pump_config file not found: {CONFIG_FILE}')
-        return None, {}
+        return
 
     try:
         with open(CONFIG_FILE, 'r') as f:
             pump_config = json.load(f)
     except Exception as e:
         logger.critical(f'Error reading {CONFIG_FILE}: {e}')
-        return None, {}
+        return
 
     # 2) Extract the recipe's ingredients
     ingredients = recipe.get('ingredients', {})
     if not ingredients:
         logger.critical('No ingredients found in recipe.')
-        return ExecutorWatcher(), {}
+        return
 
-    manual_ingredients = {ing: amt for ing, amt in ingredients.items() if ing.lower() in CARBONATED_INGREDIENTS or ing.lower() in BITTERS_INGREDIENTS or ing.lower() in LAYERING_INGREDIENTS}
-    filtered_ingredients = {ing: amt for ing, amt in ingredients.items() if ing.lower() not in CARBONATED_INGREDIENTS and ing.lower() not in BITTERS_INGREDIENTS and ing.lower() not in LAYERING_INGREDIENTS}
+    setup_gpio()
+    executor = concurrent.futures.ThreadPoolExecutor()
+    executor_watcher = ExecutorWatcher()
+    executor_watcher.executors.append(executor.submit(pour_ingredients, ingredients, single_or_double, pump_config, executor_watcher))
 
-    if filtered_ingredients:
-        setup_gpio()
-        executor = concurrent.futures.ThreadPoolExecutor()
-        executor_watcher = ExecutorWatcher()
-        executor_watcher.executors.append(executor.submit(pour_ingredients, filtered_ingredients, single_or_double, pump_config, executor_watcher))
-    else:
-        executor_watcher = ExecutorWatcher()
-
-    return executor_watcher, manual_ingredients
+    return executor_watcher
