@@ -26,7 +26,7 @@ settings = {
     }, 
     'PUMP_CONCURRENCY': {
         'parse_method': int,
-        'default': '5'
+        'default': '3'
     }, 
     'RELOAD_COCKTAILS_TIMEOUT': {
         'parse_method': int,
